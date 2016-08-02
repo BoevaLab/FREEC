@@ -141,6 +141,18 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 
 	GenomeCopyNumber::fillMyHash(mateFileName ,inputFormat, matesOrientation, windowSize, step, targetBed);
 
+    //remove chromosomes that do to have reads or exons:
+    vector <int> toErase;
+    for (int i = 0; i < (int) names.size(); i++) {
+		if (chrCopyNumber_[i].getExons_Countchr()==0) {
+            toErase.push_back(i);
+		}
+	}
+	for (int i=toErase.size()-1;i>=0;i--) {
+        chrCopyNumber_.erase(chrCopyNumber_.begin()+toErase[i]);
+        chromosomesInd_.erase(names[toErase[i]]);
+	}
+
 }
 
 void GenomeCopyNumber::initCopyNumber(std::string const& chrLenFileName, int windowSize , int step, std::string targetBed) {

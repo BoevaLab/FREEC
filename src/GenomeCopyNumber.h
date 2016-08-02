@@ -116,9 +116,6 @@ public:
 	ChrCopyNumber& getChrCopyNumberAt(int index) {return chrCopyNumber_[index];}
 	int getStep() const {return step_;}
 
-	std::vector<ChrCopyNumber> chrCopyNumber_; //was private
-	std::map<std::string, int> chromosomesInd_; //was private
-
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
     void setSeekSubclones(bool seekSubclones);
@@ -127,6 +124,8 @@ public:
     void setmakingPileup(bool makingPileup_given);
     double Percentage_GenomeExplained(int &);
 
+	std::vector<ChrCopyNumber> chrCopyNumber_; //was private
+	std::map<std::string, int> chromosomesInd_; //was private
 
 private:
     bool WESanalysis;

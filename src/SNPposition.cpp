@@ -21,6 +21,22 @@ http://www.fsf.org/licensing/licenses
 #include "SNPposition.h"
 #include <assert.h>
 
+SNPposition::SNPposition(int position, char* alt) //for a VCF line
+{
+    position_=position;
+    if (strlen(alt) == 1)   {
+        nucleotide_ = alt[0];
+    }  else  {
+        char* strs[4];
+        unsigned strs_cnt = split(alt, ',', strs);
+        nucleotide_ = strs[0][0];
+    }
+    freq_ = 0; // EV: must be initialized
+    status_ = 0; // EV: must be initialized
+    bin_=NA; //before initialization
+}
+
+
 SNPposition::SNPposition(int position, char* letters, const char* strand, const char* ref)
 {
     position_=position;

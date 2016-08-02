@@ -1715,7 +1715,7 @@ void* ChrCopyNumber_calculateBreakpoint_wrapper(void *arg)
 {
   ChrCopyNumberCalculateBreakpointArgWrapper* warg = (ChrCopyNumberCalculateBreakpointArgWrapper*)arg;
   int result = warg->chrCopyNumber.calculateBreakpoints(warg->breakPointThreshold, 0, warg->breakPointType);
-  if (result == 0) {
+  if (result <= 0) {
 	cerr << "..failed to run segmentation on chr" << warg->chrCopyNumber.getChromosome() << "\n";
   }
   return NULL;

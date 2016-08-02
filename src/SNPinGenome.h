@@ -41,6 +41,7 @@ class SNPinGenome
                                   int index,int &positionCount, int &sNPpositionToProceed,const char * pileup,int minimalQualityPerPosition,const char * quality); //returns BAF in case on heterozygous SNP (NA otherwise)
 		void readPileUP(FILE* stream, int minimalTotalLetterCountPerPosition, int minimalQualityPerPosition, GenomeCopyNumber* p_genomeCopyNumber);
         long processPileUPLine(int & positionCount, char* line, std::string & oldChr, int & sNPpositionToProceed,int minimalTotalLetterCountPerPosition, int & index, int minimalQualityPerPosition, GenomeCopyNumber* p_genomeCopyNumber);
+		int processSNPLine(bool isVCF, char * line, std::string & myChr, int & index,int &previousPos) ;
 		bool pileup_read;
         bool WESanalysis_;
         bool CopyNumberFromPileup_;

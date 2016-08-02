@@ -9,7 +9,8 @@
 class SNPposition
 {
     public:
-	    SNPposition(int position, char* letters, const char* strand, const char* ref);
+	    SNPposition(int position, char* letters, const char* strand, const char* ref); //from TXT
+        SNPposition(int position, char* alt); //for VCF
         virtual ~SNPposition();
         int getPosition();
         char getNucleotide();

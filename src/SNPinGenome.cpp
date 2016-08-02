@@ -33,9 +33,54 @@ void SNPinGenome::setSNPChr(std::vector<SNPatChr>* SNP_atChr_)
   this->SNP_atChr_ = new std::vector<SNPatChr>(*SNP_atChr_);
 }
 
+int SNPinGenome::processSNPLine(bool isVCF, char * line, string & myChr, int & index,int &previousPos) {
+
+//chr1	11273	C/G	rs72481019
+
+//#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
+//1	13372	.	G	C	608.91
+
+    #define MAX_COLS 32
+
+    char* strs[MAX_COLS];
+    unsigned int strs_cnt = split(line, '\t', strs);
+    if (strs_cnt>=3) {
+        string chr = strs[0];
+        processChrName(chr);
+        if (chr.compare(myChr)!=0) {
+            index++;
+            SNP_atChr_->push_back(SNPatChr(chr));
+            myChr = chr;
+        }
+        int position = atoi(strs[1]);
+        if (position!=previousPos) {
+            previousPos = position;
+            if (SNP_atChr_->size()>index) {
+                if (!isVCF) {
+                    if (strlen(strs[4])==1) {
+                        (*SNP_atChr_)[index].push_SNP(SNPposition(position,strs[2],strs[3],strs[4]));
+                        return 1;
+                    }
+                    return 0;
+                } else if (strlen(strs[3])==1 && strlen(strs[4])<10) {
+                        (*SNP_atChr_)[index].push_SNP(SNPposition(position,strs[4])); //if VCF
+                        return 1;
+                } else {return 0;}
+            } else {
+                cerr << "something is wrong with reading SNP positions"<< endl;
+                return 0;
+            }
+
+        } else { return 0;}
+    }
+    return 0;
+}
+
+
 void SNPinGenome::readSNPs(std::string const& inFile)
 {
     cout << "..Starting reading "<< inFile << " to get SNP positions" << std::endl;
+
 	std::ifstream fileSNP (inFile.c_str());
 
     if (!fileSNP.is_open()) {
@@ -45,7 +90,7 @@ void SNPinGenome::readSNPs(std::string const& inFile)
     SNP_atChr_ = new std::vector <SNPatChr>();
 
     int count = 0;
-   	string line;
+    string line;
 
     int index = 0;
     string myChr = "1";
@@ -57,40 +102,45 @@ void SNPinGenome::readSNPs(std::string const& inFile)
 	time_t t0 = time(NULL);
 #endif
 
-#define MAX_COLS 32
-	char* strs[MAX_COLS];
+
 	/*if (makingpileup != true)*/
 	{
-        while (std::getline(fileSNP,line)) {
+        //check whether the file is compressed:
+        bool ifGZ = 0;
+        if (inFile.substr(inFile.size()-3,3).compare(".gz")==0){ifGZ=1;}
+        //check whether the file is in VCF format:
+        bool ifVCF = 0;
+        std::size_t found = inFile.find(".vcf");
+        if (found!=std::string::npos) {ifVCF=1;}
 
-            if (! line.length()) continue;
-//chr1	11273	C/G	rs72481019
-
-            unsigned int strs_cnt = split((char*)line.c_str(), '\t', strs);
-            if (strs_cnt>=3) {
-
-                string chr = strs[0];
-                processChrName(chr);
-                if (chr.compare(myChr)!=0) {
-                    index++;
-                    SNP_atChr_->push_back(SNPatChr(chr));
-                    myChr = chr;
-
-                }
-                int position = atoi(strs[1]);
-                if (position!=previousPos) {
-                    if (SNP_atChr_->size()>index) {
-                        (*SNP_atChr_)[index].push_SNP(SNPposition(position,strs[2],strs[3],strs[4]));
-                    } else {
-                        cerr << "something is wrong with reading SNP positions"<< endl;
-                    }
-                    count++;
-                    previousPos = position;
-                }
+        if (ifGZ) {
+            fileSNP.close();
+            FILE *stream;
+            char buffer[MAX_BUFFER];
+            string command = "gzip -cd "+inFile;
+            stream =
+            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+                      _popen(command.c_str(), "r");
+            #else
+                    popen(command.c_str(), "r");
+            #endif
+            char *line_buffer;
+            while ((line_buffer = getLine(buffer, MAX_BUFFER, stream, line)) != NULL) {
+              if (line_buffer[0] == '#') continue;
+              count+=processSNPLine(ifVCF,line_buffer,myChr,index,previousPos);
+            }
+            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+                    _pclose(stream);
+            #else
+                    pclose(stream);
+            #endif
+        } else {
+            while (std::getline(fileSNP,line)) {
+                if ((!line.length()) || (line[0] == '#')) continue;
+                count+=processSNPLine(ifVCF,(char*)line.c_str(),myChr,index,previousPos);
             }
         }
-    }
-    /*else
+    } /*else
     {
         while (std::getline(fileSNP,line)) {
             if (! line.length()) continue;

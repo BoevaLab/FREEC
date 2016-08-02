@@ -564,7 +564,7 @@ int main(int argc, char *argv[])
         cout << "..minimal number of reads per window in the control sample is set to "<< RCThresh<< "\n";
     }
 
-    float seekSubclones = (float)cf.Value("general","minimalSubclonePresence", 1);
+    float seekSubclones = (float)cf.Value("general","minimalSubclonePresence", 100);
 
 // createNames:
 
@@ -636,7 +636,7 @@ int main(int argc, char *argv[])
 	sampleCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
 	sampleCopyNumber.setWESanalysis(WESanalysis);
 	sampleCopyNumber.setmakingPileup(makingPileup);
-	if (seekSubclones != 1)
+	if (seekSubclones < 100 && seekSubclones>0)
         {
         sampleCopyNumber.setSeekSubclones(true);
         }
@@ -646,7 +646,7 @@ int main(int argc, char *argv[])
 	controlCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
 	controlCopyNumber.setWESanalysis(WESanalysis);
 	controlCopyNumber.setmakingPileup(makingPileup);
-	if (seekSubclones != 1)
+	if (seekSubclones < 100 && seekSubclones>0)
         controlCopyNumber.setSeekSubclones(true);
 
 	SNPinGenome snpingenome;
@@ -1129,11 +1129,11 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
             }
         }
 
-        if (seekSubclones != 1)
+        if (seekSubclones < 100 && seekSubclones>0)
             {
-            cerr << "Seeking eventual subclones...";
+            cout << "Seeking eventual subclones...";
             SeekSubclones subc(sampleCopyNumber, ploidy, outputDir, seekSubclones);
-            cerr << "-> Done!\n";
+            cout << "-> Done!\n";
             }
              //Calculate RSS score
         long double RSStmp = calculateRSS(sampleCopyNumber, ploidy);
