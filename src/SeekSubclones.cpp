@@ -14,7 +14,7 @@ SeekSubclones::~SeekSubclones(void)
 SeekSubclones::SeekSubclones(GenomeCopyNumber & samplecopynumber, int ploidy, std::string outputDir, float minimal_pop)
 {
 ploidy_ = ploidy;
-minimal_pop_  = minimal_pop;
+minimal_pop_  = minimal_pop/100;
 getSegmentsInfo(samplecopynumber, outputDir);
 }
 
