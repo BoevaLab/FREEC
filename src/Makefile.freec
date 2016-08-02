@@ -1,0 +1,39 @@
+#
+# FREEC project Makefile
+#
+# Institut Curie, France
+#
+# Eric Viara, Valentina Boeva January 2013
+#
+
+CXXOPT = -O3 -g
+
+EXTRA_CXXFLAGS = -DPROFILE_TRACE
+
+EXTRA_LDFLAGS = -lpthread
+
+CXXFLAGS = $(CXXOPT) $(EXTRA_CXXFLAGS) -Wall -m64
+
+MAKEDEPEND = gcc -M $(EXTRA_CXXFLAGS)
+
+PROG = freec
+
+all: $(PROG)
+
+$(PROG): main.o ConfigFile.o Chameleon.o GenomeDensity.o Help.o myFunc.o KernelVector.o ChrDensity.o ChrCopyNumber.o GenomeCopyNumber.o chisquaredistr.o ap.o igammaf.o gammafunc.o normaldistr.o ablasf.o ablas.o ortfac.o sblas.o rotations.o reflections.o linreg.o hblas.o descriptivestatistics.o creflections.o blas.o bdsvd.o svd.o ialglib.o EntryCNV.o SNPinGenome.o SNPatChr.o SNPposition.o binomialdistr.o ibetaf.o ThreadPool.o BAFpileup.o RSSerror.o SeekSubclones.o
+	 g++ -m64 $(CXXOPT) -o $(PROG) $+ $(EXTRA_LDFLAGS)
+
+init:
+
+depend:
+	@$(MAKEDEPEND) *.cpp > depend_tmp.mk
+	@sed -e "s/\.o:/$(INFIX).o:/g" depend_tmp.mk > depend.mk
+	@rm -f depend_tmp.mk
+
+package:
+		(version=$$(awk '$$3 == "FREEC_VERSION" {print $$5}' version.h | sed -e 's/;//'); freec_dir=FREEC-v$$version; rm -rf $$freec_dir; mkdir -p $$freec_dir/src; cp *.h *.cpp Makefile Makefile.freec $$freec_dir/src; tar cvfz $${freec_dir}.tgz $$freec_dir)
+
+clean:
+	rm -f $(PROG) *.o depend.mk
+
+include depend.mk
