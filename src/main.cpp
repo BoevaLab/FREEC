@@ -565,6 +565,12 @@ int main(int argc, char *argv[])
     }
 
     float seekSubclones = (float)cf.Value("general","minimalSubclonePresence", 100);
+    if (seekSubclones==0  ||seekSubclones==1) {seekSubclones==100;}
+    if (seekSubclones>0  ||seekSubclones<1) {seekSubclones*=100;}
+    if (seekSubclones>0 &&seekSubclones<100)
+        cout << "..Control-FREEC will look for subclones present at least in "<<seekSubclones<<"% cells\n";
+    else
+        cout << "..Control-FREEC will not look for subclones\n";
 
 // createNames:
 
