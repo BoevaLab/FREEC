@@ -21,6 +21,10 @@ Control-FREEC accepts .GZ files. Support of Eland, BED, SOAP, arachne, psl (BLAT
 
 ---------------------------------------------------------------------------------------------------------------------------
 
+**Installation:** To install FREEC, type "make" in the command line. If you are using Linux 32bit, please remove 64bit-tags from the Makefile file before building the program.
+
+---------------------------------------------------------------------------------------------------------------------------
+
 To cite please use:
 
 Boeva V, Zinovyev A, Bleakley K, Vert JP, Janoueix-Lerosey I, Delattre O, Barillot E. (2011) Control-free calling of copy number alterations in deep-sequencing data using GC-content normalization. Bioinformatics 2011; 27(2):268-9. PMID: 21081509.
