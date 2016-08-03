@@ -1,0 +1,43 @@
+###For more options see: http://boevalab.com/FREEC/tutorial.html#CONFIG ###
+
+[general]
+chrLenFile = hg19.fa.fai
+window = 0
+ploidy = 2,3
+outputDir = /myOutputDirectory/
+
+#sex=XY
+breakPointType=4
+chrFiles =  /pathToChromosomeFastaFiles/Human/hg19/chromosomes/
+
+maxThreads=6
+
+breakPointThreshold=1.2
+noisyData=TRUE
+printNA=FALSE
+
+#forceGCcontentNormalization = 1
+
+readCountThreshold=50
+
+[sample]
+
+mateFile = /data/Tumor.onTarget.q20.nodup.pileup.gz
+inputFormat = pileup
+mateOrientation = 0
+
+[control]
+
+mateFile = /data/Normal.onTarget.q20.nodup.pileup.gz
+inputFormat = pileup
+mateOrientation = 0
+
+[BAF]
+
+SNPfile = /bioinfo/users/vboeva/Desktop/annotations/hg19_snp131.SingleDiNucl.1based.txt
+minimalCoveragePerPosition = 5
+
+[target]
+
+captureRegions = /EXOME-SEQ/TruSeq_exome_targeted_regions.hg19.bed
+

@@ -1,0 +1,92 @@
+###For more options see: http://boevalab.com/FREEC/tutorial.html#CONFIG ###
+
+
+[general]
+
+##parameters chrLenFile and ploidy are required.
+
+chrLenFile = test/hg19.fa.fai
+ploidy = 2
+
+
+##Parameter "breakPointThreshold" specifies the maximal slope of the slope of residual sum of squares. 
+##This should be a positive value. The closer it is to Zero, the more breakpoints will be called. Its recommended value is between 0.01 and 0.08.
+
+breakPointThreshold = .8
+
+
+##Either coefficientOfVariation or window must be specified for whole genome sequencing data. Set window=0 for exome sequencing data.
+
+#coefficientOfVariation = 0.01
+window = 50000
+#step=10000
+
+##Either chrFiles or GCcontentProfile must be specified too if no control dataset is available. 
+##If you provide a path to chromosome files, Control-FREEC will look for the following fasta files in your directory (in this order): 
+##1, 1.fa, 1.fasta, chr1.fa, chr1.fasta; 2, 2.fa, etc.
+## Please ensure that you don't have other files but sequences having the listed names in this directory. 
+chrFiles = path/hg19/
+#GCcontentProfile = test/GC_profile_50kb.cnp
+
+
+##if you are working with something non-human, we may need to modify these parameters:
+#minExpectedGC = 0.35
+#maxExpectedGC = 0.55
+
+
+#readCountThreshold=10
+
+#numberOfProcesses = 4
+#outputDir = test
+#contaminationAdjustment = TRUE
+#contamination = 0.4
+#minMappabilityPerWindow = 0.95
+
+
+##If the parameter gemMappabilityFile is not specified, then the fraction of non-N nucleotides per window is used as Mappability.
+
+#gemMappabilityFile = /GEM_mappability/out76.gem
+
+
+#breakPointType = 4
+#forceGCcontentNormalization = 0
+#sex=XY
+
+##set BedGraphOutput=TRUE if you want to create a BedGraph track for visualization in the UCSC genome browser:
+#BedGraphOutput=TRUE
+
+[sample]
+
+mateFile = /path/sample.bam
+#mateCopyNumberFile = test/sample.cpn
+inputFormat = BAM
+mateOrientation = RF
+
+##use "mateOrientation=0" for sorted .SAM and .BAM
+
+[control]
+
+#mateFile = /path/control.pileup.gz
+#mateCopyNumberFile = path/control.cpn
+#inputFormat = pileup
+
+
+#mateOrientation = RF
+
+#[BAF]
+
+##use the following options to calculate B allele frequency profiles and genotype status. This option can only be used if "inputFormat=pileup"
+
+#SNPfile = /bioinfo/users/vboeva/Desktop/annotations/hg19_snp131.SingleDiNucl.1based.txt
+#minimalCoveragePerPosition = 5
+
+##use "minimalQualityPerPosition" and "shiftInQuality" to consider only high quality position in calculation of allelic frequencies (this option significantly slows down reading of .pileup)
+
+#minimalQualityPerPosition = 5
+#shiftInQuality = 33
+
+[target]
+
+##use a tab-delimited .BED file to specify capture regions (control dataset is needed to use this option):
+
+#captureRegions = /bioinfo/users/vboeva/Desktop/testChr19/capture.bed
