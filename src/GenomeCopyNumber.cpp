@@ -3152,7 +3152,8 @@ float GenomeCopyNumber::evaluateContamination () {
 				if (chrCopyNumber_[index].isSmoothed() && WESanalysis == false)
 					expected = chrCopyNumber_[index].getSmoothedProfileAtI(i);
 			}
-			if (!(expected == 1 || expected <= 0 || expected >= 2 || observed > 3 || observed <= 0)) {// should it be something related to ploidy_ and not 2
+			if (!(expected == 1 || expected <= 0 || expected >= 2 || observed > 3 || observed <= 0)
+                && (((1>observed)&&(1>expected))||((1<observed)&&(1<expected)))) {// should it be something related to ploidy_ and not 2
 				float p = (observed-expected)/(observed-expected+2/ploidy_*(1-observed));
 				if (p>-0.5 && p<1.5) {
                     values.push_back(p);
@@ -3199,12 +3200,16 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
 		int length = chrCopyNumber_[index].getLength();
 		for (int i = 0; i< length; i++) {
 			float observed = chrCopyNumber_[index].getRatioAtBin(i);
-			float expected = observed;
-			if (chrCopyNumber_[index].isMedianCalculated()) {
-				expected = round_by_ploidy(chrCopyNumber_[index].getMedianProfileAtI(i),ploidy_) ;
+			if (observed!=NA) {
+                float expected = observed;
+                if (chrCopyNumber_[index].isMedianCalculated()) {
+                    expected = round_by_ploidy(chrCopyNumber_[index].getMedianProfileAtI(i),ploidy_) ;
+                }
+                if (expected!=NA && expected<2){
+                    observed_values.push_back(observed-1);
+                    expected_values.push_back(expected-1);
+                }
 			}
-            observed_values.push_back(observed);
-            expected_values.push_back(expected);
 		}
 	}
 
@@ -3301,31 +3306,28 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
             sum_y += y[i];
             sum_x2 += x[i] * x[i];
             sum_y2 += y[i] * y[i];
-            sum_xy = sum_xy + x[i] * y[i];
+            sum_xy += x[i] * y[i];
             }
 
-        float a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
-        float b = (sum_x2 * sum_y - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x);
+        float a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x); //CARINO
+         a =sum_xy/sum_x2; //VALENTINA
+      //  float b = (sum_x2 * sum_y - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x);
         float contam_a =  (1-a)/(1-a+2*a/(float)ploidy_);
-        float contam_b = -b/(-b+(2*b/ploidy_)-(2/ploidy_));
+      //  float contam_b = -b/(-b+(2*b/ploidy_)-(2/ploidy_));
         /*cerr << a << "\t" << b  << "\n";
         cerr << contam_a << "\t" << contam_b;*/
-        contam = 2*(1 - a); //contam_a/2 + contam_b/2;
-        if (contam < 0 && contam > 1)
-            {
-            contam = 0;
-            }
-    if (contam<0) {
-        cout << "\t..Evaluation of contamination produced a negative value: "<<contam<<"\n";
+        // contam = 2*(1 - a); //contam_a/2 + contam_b/2; CARINO
+    if (contam_a<0) {
+        cout << "\t..Evaluation of contamination produced a negative value: "<<contam_a<<"\n";
         cout << "\t..This probably means that there is not contamination at all or your \"ploidy\" value is not correct\n Will continue with contamination = 0\n";
-        contam=0;
+        contam_a=0;
     }
-    if (contam > 1) {
-        cout << "\t..Evaluation of contamination produced a value over 1: "<<contam<<"\n";
+    if (contam_a > 1) {
+        cout << "\t..Evaluation of contamination produced a value over 1: "<<contam_a<<"\n";
         cout << "\t..This probably means that there is not contamination at all or your \"ploidy\" value is not correct\n Will continue with contamination = 0\n";
-        contam=0;
+        contam_a=0;
     }
-	return contam;
+	return contam_a;
 }
 
 

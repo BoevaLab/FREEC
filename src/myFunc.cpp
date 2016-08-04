@@ -1750,13 +1750,16 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
     //getCopyNumbers(copyNumber,copyNumbers);
     getCopyNumbers(copyNumber,copyNumbers,ploidy, noisyData);
 
+    int preferedCN=round_f(copyNumber);
+    int winningCN=NA;
+
     if (ifHomoz) {
         //align Homozygous status to this fragment
 
         cout << "..too few points to fit the data, average copy number="<<copyNumber<<"\n";
         cout << "suggest homozygous region\n";
         uncertainty = NA;
-        estimatedBAF = 1;
+        estimatedBAF = 0;
         fittedBAF=NA;
         medianBAFSym="-1";
         if (round_f(copyNumber)>=1) {
@@ -1800,6 +1803,11 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
 
     uncertainty = NA;
     vector <double> LogLikelyHoods;
+    vector <int> testedCN;
+    vector <string> medianBAFSyms;
+    vector <float>estimatedBAFs;
+    vector <float>fittedBAFs;
+
 
     for (int unsigned i=0; i<copyNumbers.size(); i++) {
         int myCopyNumber = copyNumbers.at(i);
@@ -1810,11 +1818,10 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
             uncertainty = NA;
         } else if (myCopyNumber==1) {
             medianBAFSym = "A";
-            estimatedBAF = 1;
+            estimatedBAF = 0;
             fittedBAF = NA;
             uncertainty = NA;
         }
-
         else {
             int Bcount = 0;
             int Acount = myCopyNumber;
@@ -1841,18 +1848,30 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
                 }
                 double LogLikelyHood = calculateLogLikelyHoodNormalMixtureForBAFs(BAFs,mu,middleComponentMinWeight, fixedMu,CompleteGenomicsData);
                 LogLikelyHoods.push_back(LogLikelyHood);
+                testedCN.push_back(myCopyNumber);
+
+                string medianBAFSymX = "A";
+                for (int i = 1; i<Acount; i++) {
+                    medianBAFSymX+="A";
+                }
+                for (int i = 0; i<Bcount; i++) {
+                    medianBAFSymX+="B";
+                }
+                medianBAFSyms.push_back(medianBAFSymX);
+
+                estimatedBAFs.push_back(Bcount*1./myCopyNumber);
+                fittedBAFs.push_back(mu_);
+
                 if (maxLogLikelyHood<LogLikelyHood) {
                     maxLogLikelyHood=LogLikelyHood;
-                    medianBAFSym = "A";
-                    for (int i = 1; i<Acount; i++) {
-                        medianBAFSym+="A";
-                    }
-                    for (int i = 0; i<Bcount; i++) {
-                        medianBAFSym+="B";
-                    }
+                    medianBAFSym = medianBAFSymX;
                     estimatedBAF = Bcount*1./myCopyNumber;
                     fittedBAF=mu_;
+                    winningCN=myCopyNumber;
                 }
+
+
+
                 mu.clear();
                 Bcount++;
                 Acount--;
@@ -1860,12 +1879,15 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
         }
     }
     if (LogLikelyHoods.size()>1) {
+        vector <double> LogLikelyHoods_sec=LogLikelyHoods;
         sort (LogLikelyHoods.begin(), LogLikelyHoods.end());
         uncertainty = 1./(LogLikelyHoods[LogLikelyHoods.size()-1]-LogLikelyHoods[LogLikelyHoods.size()-2]);
-
+   //     uncertainty = exp(LogLikelyHoods[LogLikelyHoods.size()-2]-LogLikelyHoods[LogLikelyHoods.size()-1]);//since v9.4 : p(secondBest)/p(best)
         if (copyNumbers.size()>=1) {
-            if (copyNumbers[0]==1 && copyNumbers[1]==2 && copyNumber<1.5 && medianBAFSym.compare("AA")==0) {
+            if (copyNumbers[0]==1 && copyNumbers[1]==2 && copyNumber<1.5 && (medianBAFSym.compare("AA")==0 || medianBAFSym.compare("AB")==0 && uncertainty >0.1)) {
                 medianBAFSym="A";
+                estimatedBAF = 0;
+                fittedBAF=NA;
             }
             if (copyNumbers[0]>1 && LogLikelyHoods.size()>=3) { //should be always >=3, but just in case
                 if (medianBAFSym[medianBAFSym.size()-1] == 'A') { //means AAAAA
@@ -1879,13 +1901,27 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
                     //end recalculate uncertainty:
                    // cout << LogLikelyHoods[LogLikelyHoods.size()-1]<< " " << LogLikelyHoods[LogLikelyHoods.size()-2] <<"\n";
                     uncertainty = 1./(LogLikelyHoods[LogLikelyHoods.size()-1]-LogLikelyHoods[LogLikelyHoods.size()-3]);
-
                 }
-
             }
-
+            if (copyNumbers[0]>1 && winningCN!=preferedCN) { //check uncertainty for ambigous cases
+                float preferedCNLogLH=-INFINITY;
+                int bestInd=NA;
+                for(int jj=0; jj<testedCN.size();jj++) {
+                    if (testedCN[jj]==preferedCN && preferedCNLogLH<LogLikelyHoods_sec[jj]) {
+                        preferedCNLogLH=LogLikelyHoods_sec[jj];
+                        bestInd=jj;
+                    }
+                }
+                float uncertWinVsPref=1./(LogLikelyHoods[LogLikelyHoods.size()-1]-preferedCNLogLH); //since v9.4
+                if (uncertWinVsPref>0.1) {
+                    uncertainty=uncertWinVsPref;
+                    medianBAFSym=medianBAFSyms[bestInd];
+                    estimatedBAF=estimatedBAFs[bestInd];
+                    fittedBAF=fittedBAFs[bestInd];
+                }
+            }
         }
-
+        LogLikelyHoods_sec.clear();
     }
     if (uncertainty>1)
         uncertainty = 100;
@@ -1895,7 +1931,10 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
     LogLikelyHoods.clear();
     BAFs.clear();
     copyNumbers.clear();
-
+    testedCN.clear();
+    medianBAFSyms.clear();
+    estimatedBAFs.clear();
+    fittedBAFs.clear();
 }
 
 
@@ -1926,7 +1965,7 @@ void getCopyNumbers (float copyNumber, vector <int> & copyNumbers,int ploidy, bo
             return;
 
     }
-    if(highCopy==lowCopy){
+    if(highCopy==lowCopy){ //not possible!!
             copyNumbers.push_back(round_f(copyNumber));
             return;
 
@@ -1942,8 +1981,8 @@ void getCopyNumbers (float copyNumber, vector <int> & copyNumbers,int ploidy, bo
             copyNumbers.push_back(highCopy);
         }
     } else { //prioretize normal copy number status
-        float minDiffNoNorm = 0.45;
-        float minDiff = 0.05;
+        float minDiffNoNorm = 0.35;
+        float minDiff = 0.15;
 
         if (lowCopy == ploidy) {
 
@@ -1987,7 +2026,7 @@ double calculateLogLikelyHoodNormalMixtureForBAFs(vector <float> X,vector <float
     int iterationCount = 0;
     int maxIterationCount = 10000;
 
-    float maxSigma = 0.10; //used only if isMuFixed==TRUE
+    float maxSigma = 0.07; //used only if isMuFixed==TRUE
     float minOmega = 0.6;  //used only if isMuFixed==TRUE; for the sum of the two components in case of CN>2
     float minMinOmega = 0.15;  //used only if isMuFixed==TRUE; for one component
 

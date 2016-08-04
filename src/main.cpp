@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
         std::cout << "..FREEC is going to evaluate contamination by normal cells\n";
     }
 
-	bool CompleteGenomicsData = (bool)cf.Value("general", "CompleteGenomics", "false");
+	bool CompleteGenomicsData = cf.Value("general", "CompleteGenomics",false);
     if (CompleteGenomicsData) {
             cout << ".. will shift expected BAF values towards zero as you deal with unperfect CompleteGenomics data"<< endl;
     }
