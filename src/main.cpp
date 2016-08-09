@@ -411,6 +411,9 @@ int main(int argc, char *argv[])
 	bool has_GCprofile = cf.hasValue("general","GCcontentProfile");
     std::string GCprofileFile = std::string(cf.Value("general","GCcontentProfile", ""));
     int forceGC = int(cf.Value("general","forceGCcontentNormalization",0));
+    if (ifTargeted && window==0) {
+        forceGC = int(cf.Value("general","forceGCcontentNormalization",1));
+    }
     int intercept;
     bool isUseGC = false;
     if (!isControlIsPresent || has_BAF || forceGC) {
@@ -422,22 +425,20 @@ int main(int argc, char *argv[])
             if (ifTargeted) {
                 if (forceGC==0) {
                     isUseGC = false;
-                    cout <<"..Since you use targeted sequencing data, FREEC will use only control read counts to normalize copy number profiles.\n";
-                    cout <<"....Set forceGCcontentNormalization=1 if you want to use GC-content normalization prior to control density normalization for targeted sequencing.\n";
-                    cout <<"....However, with targeted sequencing, I would not recommend to use this option (forceGCcontentNormalization=1 or 2) since capture bias can be much stronger than GC-content bias\n";
+                    cout <<"..FREEC will use only control read counts to normalize copy number profiles.\n";
+                    cout <<"Warning: please, set forceGCcontentNormalization=1 if you want to use GC-content normalization prior to control density normalization for targeted sequencing.\n";
+                    cout <<"..Since version v9.5, forceGCcontentNormalization=1 is default for exome-seq data\n";
                 } else {
-                    cout << "Warning: with targeted sequencing, I would not recommend to use forceGCcontentNormalization=1 or 2 since capture bias can be much stronger than GC-content bias\n";
-                    cout <<"..I recommend you to set forceGCcontentNormalization=0 or comment this line in the config file\n";
-                    cout << "..Continue anyway :-/\n";
+                    cout <<"..forceGCcontentNormalization was set to 1: will use GC-content to normalize the read count data\n";
                 }
             }
     }
 
-    if (isUseGC) {
+    if (isUseGC ) {
         cout << "..minimal expected GC-content (general parameter \"minExpectedGC\") was set to "<< minExpectedGC<<"\n";
         cout << "..maximal expected GC-content (general parameter \"maxExpectedGC\") was set to "<< maxExpectedGC <<"\n";
         intercept = (int)(cf.Value("general","intercept", 1));
-        if (intercept!=1) {
+        if (intercept!=1 && !ifTargeted) {
                 cout << "Warning: I would advise using 'intercept=1' with your parameters\n";
         }
     }else {
@@ -447,13 +448,23 @@ int main(int argc, char *argv[])
         }
     }
 
+    if (intercept==0 && ifTargeted && forceGC) {
+        cout << "..Will use intercept==1 for the GC-content normalization and intercept==0 for the second normalization using the control\n";
+    }
+
     int degree = (int)cf.Value("general", "degree", NA);
 	if (degree!=NA) {
-        std::cout << "..Polynomial degree for \"ReadCount ~ GC-content\" or \"Sample ReadCount ~ Control ReadCount\" is "<< degree<< "\n";
+        if (forceGC==0 ||forceGC==2)
+            std::cout << "..Polynomial degree for \"ReadCount ~ GC-content\" or \"Sample ReadCount ~ Control ReadCount\" is "<< degree<< "\n";
+        if (forceGC==1) {
+            std::cout << "..Polynomial degree for \"ReadCount ~ GC-content\" is "<< degree<< "\n";
+            if (degree<3)
+                std::cout << "Warning: minimal recommended polynomial degree for \"ReadCount ~ GC-content\" is 3\nComment or remove the corresponding line in the config file to try both degree==3 and degree==4\n";
+        }
     } else {
         if (intercept==1 && !(!has_BAF&&isControlIsPresent)) {
             std::cout << "..Polynomial degree for \"ReadCount ~ GC-content\" normalization is 3 or 4: will try both\n";
-        } else {
+        } else if (!(ifTargeted && forceGC==1)) {
             degree=1;
             std::cout << "..Polynomial degree for \"Sample ReadCount ~ Control ReadCount\" normalization is "<< degree<< "\n";
         }
@@ -842,14 +853,32 @@ int main(int argc, char *argv[])
             sampleCopyNumber.printCGprofile(GCprofileFile);
             cout << "..Mappability track from "<< gemMapFile <<" has been added to "<< GCprofileFile <<"\n";
         }
+	} else if (isUseGC && WESanalysis == true) {  //read the GC for the whole exome:
+        cout << "..using GC-content to normalize copy number profiles\n";
+        if (has_GCprofile) {		// a file with CG-content already exists
+			    cout << "Warning: Will ignore the existing GC-content profile. FREEC will need to recalculate it. You must provide a path to chromosome files, option \"chrFiles\"\n";
+        }
+        if (has_dirWithFastaSeq) {// has_dirWithFastaSeq is true
+			sampleCopyNumber.fillCGprofile(dirWithFastaSeq);
+			GCprofileFile = outputDir+"GC_profile.cnp";
+			if (!has_MapFile)
+                sampleCopyNumber.printCGprofile(GCprofileFile); //if has_MapFile will print out GC-content later
+        } else {cerr << "Error: Cannot read chromosome fasta files for the GC content correction\n";}
+        if (has_MapFile) {  //read mappability file
+            sampleCopyNumber.readGemMappabilityFile(gemMapFile);
+            //rewrite GC-profile with mappability as the last (5th) colomn
+            GCprofileFile = outputDir+"GC_profile.cnp";
+            sampleCopyNumber.printCGprofile(GCprofileFile);
+            cout << "..Mappability track from "<< gemMapFile <<" has been added to "<< GCprofileFile <<"\n";
+        }
 	}
 
-	if (isControlIsPresent && isUseGC && WESanalysis == false) {//then read CG-content and associate it with the control data.
+	if (isControlIsPresent && isUseGC ) {// && WESanalysis == false removed in v9.4 //then read CG-content and associate it with the control data.
 		cout << "..using GC-content to normalize the control profile\n";
 		controlCopyNumber.readCGprofile(GCprofileFile); //the file with CG-content already exists
-        if (ifTargeted) {
+        if (ifTargeted && WESanalysis == false) {
                 controlCopyNumber.focusOnCapture(targetBed); // to mask again averything which is not in the capture
-                sampleCopyNumber.focusOnCapture(targetBed); //TODO: Check whether it is needed. can get here only if "forceGCwhenControlIsPresent>0"
+                sampleCopyNumber.focusOnCapture(targetBed); //TODO: Check whether it is needed. can get here only if "forceGCcontentNormalization>0"
         }
 	}
 
@@ -990,7 +1019,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         sampleCopyNumber.setPloidy(ploidy);
         sampleCopyNumber.setNormalContamination(knownContamination);
         if (isControlIsPresent) {
-            if ((!forceGC && !(has_BAF) || (ifTargeted&&forceGC!=1) || (WESanalysis == true))) { //normalize sample density with control density
+            if ((!forceGC && !(has_BAF) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0))) { //normalize sample density with control density
                 sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
             } else { //forceGC != 0
                 if (forceGC==1) { //normalize first Sample and Control, and then calculate the ratio
