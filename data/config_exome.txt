@@ -16,8 +16,6 @@ breakPointThreshold=1.2
 noisyData=TRUE
 printNA=FALSE
 
-#forceGCcontentNormalization = 1
-
 readCountThreshold=50
 
 [sample]
