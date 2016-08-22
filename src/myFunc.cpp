@@ -223,6 +223,8 @@ void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::
 	string line;
 	string name;
 	int value = 0;
+	bool isFai=0;
+	if (chrLenFileName.substr(chrLenFileName.length()-3,3).compare("fai")==0) {isFai=1;}
 	while (std::getline(file,line)) {
 
 		if (! line.length()) continue;
@@ -232,7 +234,7 @@ void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::
 		if (strs.size()<2) {
 		    cerr << "uncorrect file with chromosomes "<< chrLenFileName <<"\nUse tab-delimited format:\n1\tchr1\t249250621\nor\nchr1\t249250621\n";
 		}
-		if (strs.size()==2 || strs[0].substr(0,3)=="chr") {
+		if (strs.size()==2 || strs[0].substr(0,3)=="chr" || isFai) {
 			name  = strs[0];
 			value = atoi(strs[1].c_str());
 		}
@@ -1221,12 +1223,12 @@ string pathAppend(const string& p1, const string& p2) {
 
    char sep = '/';
    string tmp = p1;
-
+   char sep2=sep;
 #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
-  sep = '\\';
+  sep2 = '\\';
 #endif
-
-  if (p1[p1.length( )] != sep) { // Need to add a
+  char lastSymb=  p1[p1.length( )-1];
+  if (lastSymb != sep && lastSymb != sep2) { // Need to add a
      tmp += sep;                // path separator
      return(tmp + p2);
   }

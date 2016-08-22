@@ -2526,7 +2526,7 @@ void GenomeCopyNumber::readCopyNumber(std::string const& inFile) {
 			int length = chrCopyNumber_[(*it).second].getValues().size();
 			chrCopyNumber_[(*it).second].setVectorLength(length);
 			int chromosomeLength=length*step_;
-			if (chrCopyNumber_[(*it).second].getEndsSize()>=0)
+			if (chrCopyNumber_[(*it).second].getEndsSize()>0)
                 chromosomeLength=chrCopyNumber_[(*it).second].getEndAtBin(chrCopyNumber_[(*it).second].getEndsSize()-1);
 
             chrCopyNumber_[(*it).second].setChrLength(chromosomeLength);
