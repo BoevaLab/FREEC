@@ -1690,7 +1690,7 @@ float ChrCopyNumber::getLevelAt(int unsigned i, int ploidy) {
         valueToReturn = float(int(value*ploidy))/ploidy;
 
     //use BAF for ambigious cases:
-    if (valueToReturn>0 && estBAFuncertaintyPerFrag_.size()>i && BAFsymbPerFrag_[i].compare("-1")!=0 &&BAFsymbPerFrag_[i]!="" && BAFsymbPerFrag_[i].length()!=valueToReturn*ploidy && (estBAFuncertaintyPerFrag_[i] < MAXUncertainty)) {
+    if (valueToReturn>0 && estBAFuncertaintyPerFrag_.size()>i && BAFsymbPerFrag_[i].compare("-")!=0 &&BAFsymbPerFrag_[i]!="" && BAFsymbPerFrag_[i].length()!=valueToReturn*ploidy && (estBAFuncertaintyPerFrag_[i] < MAXUncertainty)) {
         //change Level value if there is no incertainty:
         valueToReturn=BAFsymbPerFrag_[i].length()*1./ploidy;
     }

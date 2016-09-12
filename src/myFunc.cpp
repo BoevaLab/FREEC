@@ -1763,7 +1763,7 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
         uncertainty = NA;
         estimatedBAF = 0;
         fittedBAF=NA;
-        medianBAFSym="-";
+        medianBAFSym="";
         if (round_f(copyNumber)>=1) {
             medianBAFSym="A";
             for (int i = 1; i<round_f(copyNumber); i++) {
@@ -1791,12 +1791,10 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
         estimatedBAF = NA;
         fittedBAF = NA;
         uncertainty = NA;
-        medianBAFSym="-";
-        if (round_f(copyNumber)>=1) {
-            medianBAFSym="A";
-            for (int i = 1; i<round_f(copyNumber); i++) {
-                    medianBAFSym+="A";
-            }
+        medianBAFSym="";
+        if (round_f(copyNumber)==1){medianBAFSym="A";}
+        if (round_f(copyNumber)>1) {
+            medianBAFSym="-";
         }
         return;
     }
@@ -1813,7 +1811,7 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
     for (int unsigned i=0; i<copyNumbers.size(); i++) {
         int myCopyNumber = copyNumbers.at(i);
         if(myCopyNumber==0) {
-            medianBAFSym = "-";
+            medianBAFSym = "";
             estimatedBAF = NA;
             fittedBAF = NA;
             uncertainty = NA;
