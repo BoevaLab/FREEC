@@ -41,6 +41,7 @@ private:
 	std::string medianBAFSymbol_;
 	std::string type_; //somatic or germline
 	float germlinePercent_; //percent of germline CNA or LOH
+	bool isBAFassessed_;
 };
 #endif
 

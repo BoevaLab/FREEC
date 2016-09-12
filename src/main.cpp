@@ -410,10 +410,15 @@ int main(int argc, char *argv[])
 
 	bool has_GCprofile = cf.hasValue("general","GCcontentProfile");
     std::string GCprofileFile = std::string(cf.Value("general","GCcontentProfile", ""));
-    int forceGC = int(cf.Value("general","forceGCcontentNormalization",0));
+
+    int forceGC = 0;
+
     if (ifTargeted && window==0) {
-        forceGC = int(cf.Value("general","forceGCcontentNormalization",1));
+        forceGC = 1;
     }
+
+    forceGC = int(cf.Value("general","forceGCcontentNormalization",0));
+
     int intercept;
     bool isUseGC = false;
     if (!isControlIsPresent || has_BAF || forceGC) {

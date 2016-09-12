@@ -33,6 +33,7 @@ EntryCNV::EntryCNV(string chr, int start, int end, int startCoord, int endCoord,
 	estimatedBAFuncertainty_ = NA;
 	medianBAFSymbol_ = "";
 	type_="";
+	isBAFassessed_=0;
 }
 
 EntryCNV::EntryCNV(string chr, int start, int end, int startCoord, int endCoord, int copyNumber,float estimatedBAFuncertainty, std::string medianBAFSymbol, bool hasBAF) {
@@ -49,6 +50,7 @@ EntryCNV::EntryCNV(string chr, int start, int end, int startCoord, int endCoord,
         estimatedBAFuncertainty_=-1;
         medianBAFSymbol_="-";
 	}
+    isBAFassessed_=1;
 }
 
 std::string EntryCNV::printEntryCNV(float ploidy){
@@ -61,14 +63,15 @@ std::string EntryCNV::printEntryCNV(float ploidy){
     else if (copyNumber_<ploidy)
         ss << "loss";
     else
-        ss << "normal";
+        ss << "neutral";
 
-    if (medianBAFSymbol_!="")
+    if (isBAFassessed_!=0)
              ss << "\t"<< medianBAFSymbol_<< "\t"<< estimatedBAFuncertainty_;
 
-    if (type_ != "")
+    if (type_ != "" && type_.compare("normal")!=0)
             ss << "\t"<< type_<< "\t"<< germlinePercent_;
-
+    if (type_.compare("normal")==0)
+            ss << "\t"<< "neutral"<< "\t"<< germlinePercent_;
 	return ss.str();
 }
 

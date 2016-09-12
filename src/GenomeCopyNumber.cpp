@@ -1419,20 +1419,16 @@ void GenomeCopyNumber::printRatio(std::string const& outFile, bool ifBedGraphOut
     map<string,int>::iterator it;
 
     if (ifBedGraphOutPut==false) {
+        file << "Chromosome\tStart\tRatio\tMedianRatio\tCopyNumber";
 
-        if (WESanalysis == true)
-            {
-            file << "Chromosome\tStart\tRatio\tMedianRatio\tCopyNumber\tGene";
-            }
-        else
-            {
-            file << "Chromosome\tStart\tRatio\tMedianRatio\tCopyNumber";
-            }
 
         if (hasBAF_==1){
             file << "\tBAF\testimatedBAF\tGenotype\tUncertaintyOfGT";
         }
-
+        if (WESanalysis == true)
+            {
+            file << "\tGene";
+            }
         if (SeekingSubc == true)
             {
             file << "\tSubclones_cn\tSubclones_pop";
@@ -1458,7 +1454,7 @@ void GenomeCopyNumber::printRatio(std::string const& outFile, bool ifBedGraphOut
         for ( it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
             printRatioBedGraph((*it).first,file, "loss");
         }
-        file << "track type=bedGraph name=\"normal copy number from "<<outFile<<"\" description=\"Normal Copy Number\" color=20,255,40\n";
+        file << "track type=bedGraph name=\"neutral copy number from "<<outFile<<"\" description=\"Neutral Copy Number\" color=20,255,40\n";
         for ( it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
             printRatioBedGraph((*it).first,file, "normal");
         }
@@ -1538,10 +1534,10 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
 		int start = 0;
 		int end = NA;
 		int cnumber = NA;
-		string BAFSym = "-1";
-        string BAFprev = "-1";
-        string BAFnext = "-1";
-        string lBAF = "-1";
+		string BAFSym = "-";
+        string BAFprev = "-";
+        string BAFnext = "-";
+        string lBAF = "-";
 
         float lUncertainty = NA;
         float BAFUncertainty = NA;
@@ -1566,7 +1562,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
 				if (nextIndex == NA) {
 					nextLevel = NA;
 					lengthOfNextLevel = 0;
-					BAFnext = "-1";
+					BAFnext = "-";
 				} else {
 					nextLevel = it->getLevelAt(nextIndex, ploidy_);
 					lengthOfNextLevel = it->getFragmentLengthsAt(nextIndex);
@@ -1615,7 +1611,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                             if (BAFprev.compare(BAFnext)==0)
                                 BAFSym = BAFnext;
                             else
-                                BAFSym = "-1";
+                                BAFSym = "-";
 
                         } else {
                             if ((previousLevel != NA) && (nextLevel != NA) ) {
@@ -1671,7 +1667,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
 					    if (realEndOfTheCNV > it->getChrLength())
                             realEndOfTheCNV=it->getChrLength();
 
-                        if (hasBAF_ && lBAF!="" && lBAF.compare("-1")!=0)
+                        if (hasBAF_ && lBAF!="" && lBAF.compare("-")!=0)
                             cnumber = lBAF.length();
 
                         if (sex_.compare("XY")==0 && (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
@@ -1680,7 +1676,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                                 else
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber)); //save previous CNV
-                            else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                            else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
 
@@ -1691,7 +1687,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                                 else
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber)); //save previous CNV
-                            else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                            else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 						}
 
@@ -1733,7 +1729,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                             realEndOfTheCNV=it->getChrLength();
 
 
-                        if (hasBAF_ && lBAF!="" && lBAF.compare("-1")!=0)
+                        if (hasBAF_ && lBAF!="" && lBAF.compare("-")!=0)
                             cnumber = lBAF.length();
 
 
@@ -1744,7 +1740,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                                 else
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber)); //save previous CNV
-                            else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                            else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
 
@@ -1755,7 +1751,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                                 else
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber)); //save previous CNV
-                            else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                            else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                         }
 
@@ -1781,7 +1777,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
 		}
 		//save the last CNV for this chromosomerealLength
 
-        if (hasBAF_ && lBAF!="" && lBAF.compare("-1")!=0)
+        if (hasBAF_ && lBAF!="" && lBAF.compare("-")!=0)
             cnumber = lBAF.length();
 
 		if (it->getEndsSize()==0) {
@@ -1798,7 +1794,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                     else
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber)); //save previous CNV
-                else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
             } else {
@@ -1808,7 +1804,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                     else
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber)); //save previous CNV
-                else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
             }
@@ -1835,7 +1831,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                     else
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber)); //save previous CNV
-                else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                else if (hasBAF_ && lBAF.compare(NormalBAF_XY)!=0 && cnumber == normalXYploidy && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
             } else {
@@ -1844,7 +1840,7 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_exomeLength(int breakPointTy
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                     else
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber)); //save previous CNV
-                else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-1")!=0) //abnormal BAF
+                else if (hasBAF_ && lBAF.compare(NormalBAF)!=0 && cnumber == ploidy_ && lBAF!=""&& lBAF.compare("-")!=0) //abnormal BAF
                     CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,it->getCoordinateAtBin(start),realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
 
             }
@@ -3087,7 +3083,7 @@ float GenomeCopyNumber::calculateVarianceForNormalCopy(int ploidy) { //geting th
 	myfile.open ("example.txt");
 
 
-	cout << "..Calculating variance for normal copies\n";
+	cout << "..Calculating variance for neutral copies\n";
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
 		//cout << "..processing chromosome " <<it->getChromosome()<<"\n";
 		for (int i = 0; i<it->getLength(); i++) {

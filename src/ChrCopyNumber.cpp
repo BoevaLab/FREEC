@@ -745,7 +745,7 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
         //medianBAFProfile_ = vector <float> (length_,NA);
         estimatedBAFProfile_ = vector <float> (length_,NA);
         fittedBAFProfile_ = vector <float> (length_,NA);
-        medianBAFSymbol_ = vector <std::string> (length_,"");
+        medianBAFSymbol_ = vector <std::string> (length_,"-");
         estimatedBAFuncertainty_ = vector <float> (length_,NA);
         cout << "..Control: BAF profile is present\n";
 	}
@@ -819,7 +819,7 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
                     //medianBAF = NA;
                     estimatedBAF = NA;
                     fittedBAF=NA;
-                    medianBAFSym = "-1";
+                    medianBAFSym = "-";
                     uncertainty = NA;
 				}
 			} else {
