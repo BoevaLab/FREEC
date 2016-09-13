@@ -157,8 +157,8 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 
 void GenomeCopyNumber::initCopyNumber(std::string const& chrLenFileName, int windowSize , int step, std::string targetBed) {
 
-  if (WESanalysis == false)
-  {
+  ThreadPoolManager::getInstance()->lock();
+  if (WESanalysis == false)  {
     if (step == NA) {
 	  step = windowSize;
 	}
@@ -179,9 +179,7 @@ void GenomeCopyNumber::initCopyNumber(std::string const& chrLenFileName, int win
 		chromosomesInd_.insert(pair<string, int> (names[i],i));
 		chrCopyNumber_.push_back(chrCopyNumber);
 	}
-   }
-   else
-   {
+   }   else   {
     std::vector<std::string> names;
 	std::vector<int> lengths;
 	readFileWithGenomeInfo(chrLenFileName, names, lengths);
@@ -192,6 +190,7 @@ void GenomeCopyNumber::initCopyNumber(std::string const& chrLenFileName, int win
 		chrCopyNumber_.push_back(chrCopyNumber);
     }
    }
+   ThreadPoolManager::getInstance()->unlock();
 }
 
 void GenomeCopyNumber::finishCopyNumber(long normalCount) {
