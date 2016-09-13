@@ -2416,7 +2416,7 @@ int GenomeCopyNumber::readCGprofile(std::string const& inFile) {
                         float MappPerc =(float)strtod(strs[4].c_str(), NULL);
                         chrCopyNumber_[index].addToMappabilityProfile(MappPerc);
                     }
-                    if (observedStep!=0 && observedStep!=step_ && step_!=0) {
+                    if (observedStep!=0 && observedStep!=step_ && step_!=NA && step_!=0) {
                         file.close();
                         chrCopyNumber_[index].clearCGcontent();
                         chrCopyNumber_[index].clearNonNpercent();
