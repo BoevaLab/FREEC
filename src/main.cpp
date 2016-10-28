@@ -25,7 +25,6 @@ http://www.fsf.org/licensing/licenses
 #include "GenomeCopyNumber.h"
 
 #include "BAFpileup.h"
-#include "RSSerror.h"
 #include "SeekSubclones.h"
 
 #include "version.h"
@@ -1106,7 +1105,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         cout << std::flush;
         sampleCopyNumber.calculateCopyNumberMedians(minCNAlength,0,CompleteGenomicsData);
         //sampleCopyNumber.calculatePloidy(minCNAlength);
-
+        sampleCopyNumber.shiftNeutalRatioTo1(); //experimental
 
         if (WESanalysis == false)  // demander à Valentina
         {
@@ -1170,7 +1169,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
             cout << "-> Done!\n";
             }
              //Calculate RSS score
-        long double RSStmp = calculateRSS(sampleCopyNumber, ploidy);
+        long double RSStmp = sampleCopyNumber.calculateRSS(ploidy);
         int unexplainedChromosomesByThisPloidy=0;
         percentage_GenExpl.push_back(sampleCopyNumber.Percentage_GenomeExplained(unexplainedChromosomesByThisPloidy));
         RSS.push_back(RSStmp);

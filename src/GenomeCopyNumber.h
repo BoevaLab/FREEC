@@ -88,6 +88,7 @@ public:
 	void printBAF(std::string const& outFile, SNPinGenome& snpingenome, std::string const& matefile = "");
     void printBAF(std::string const& chr, std::ofstream & file, SNPatChr& snpAtChrom, std::string myName, std::string const& matefile);
 
+    void shiftNeutalRatioTo1();
 
 
 	int findIndex (std::string const& chr);
@@ -123,11 +124,14 @@ public:
     double getGenomeRefSize();
     void setmakingPileup(bool makingPileup_given);
     double Percentage_GenomeExplained(int &);
+    long double calculateRSS(int ploidy);
+    int getNumberOfChromosomes();
 
-	std::vector<ChrCopyNumber> chrCopyNumber_; //was private
-	std::map<std::string, int> chromosomesInd_; //was private
 
 private:
+
+    std::vector<ChrCopyNumber> chrCopyNumber_; //should stay private !!! why is it public now, Carino????
+	std::map<std::string, int> chromosomesInd_; //should stay private
     bool WESanalysis;
     bool makingPileup;
     bool SeekingSubc;

@@ -17,9 +17,9 @@ class BAFpileup
             std::string pathToSamtools, std::string chrLen, std::string controlName, std::string targetBed = "",
              std::string pathToBedtools = "", std::string fastaFile="", int minQualPerPos=0);
         float calculateFlankLength(std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation, std::string pathToSamtools);
-        void calculateNewBoundaries(std::string targetBed, int flanks, std::string outpuDir);
-        std::string intersectWithBedtools(std::string makeminipileup, std::string outputDir,  std::string targetBed, std::string chrLen);
-        void printfile (std::string outputDir, std::string chrLen);
+        void calculateNewBoundaries(std::string targetBed, int flanks, std::string bedFileWithRegionsOfInterest);
+        std::string intersectWithBedtools(std::string makeminipileup, std::string outputDir,  std::string bedFileWithRegionsOfInterest, std::string chrLen);
+        void createBedFileWithChromosomeLengths (std::string bedFileWithRegionsOfInterest, std::string chrLenFile);
         std::string createPileUpFile(std::string  outputDir, std::string samtools_path,std::string control_tumor, std::string intersected, std::string fastaFile,int minQualPerPos);
         std::vector < std::vector<float> >computeBAF(GenomeCopyNumber & sampleorcontrol, std::string minipileup, std::string outputDir, std::string filename);
         std::vector <int> coordinates_;

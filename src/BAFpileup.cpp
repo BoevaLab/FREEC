@@ -10,23 +10,29 @@ BAFpileup::BAFpileup()
 void BAFpileup::makepileup(GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber & controlCopyNumber,
         std::string sample_MateFile, std::string control_Matefile, std::string outputDir, std::string makeminipileup,
         std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation,
-        std::string pathToSamtools, std::string chrLen, std::string controlName, std::string targetBed,  std::string pathToBedtools,
+        std::string pathToSamtools, std::string chrLenFileName, std::string controlName, std::string targetBed,  std::string pathToBedtools,
         std::string fastaFile, int minQualPerPos)
 {
+    //create a .bed file with regions of interest to create a minipileup: targeted + flanks for WES or all chromosomes for WGS:
+    std::string bedFileWithRegionsOfInterest = outputDir + "_NewCaptureRegions" +  ".bed";
+
     if (targetBed != "")
         {
         int flanks = calculateFlankLength(mateFileName, inputFormat, matesOrientation, pathToSamtools);
-        calculateNewBoundaries(targetBed, flanks, outputDir);
+        calculateNewBoundaries(targetBed, flanks, bedFileWithRegionsOfInterest);
         }
     else
         {
-        printfile(outputDir,chrLen);
+        createBedFileWithChromosomeLengths(bedFileWithRegionsOfInterest,chrLenFileName);
         }
     pathToBedtools_=pathToBedtools; // /*
-    string intersected = intersectWithBedtools(makeminipileup, outputDir, targetBed, chrLen);
-    string _sample = createPileUpFile( outputDir, pathToSamtools, sample_MateFile, intersected, fastaFile,minQualPerPos);
+    string intersected = intersectWithBedtools(makeminipileup, outputDir, bedFileWithRegionsOfInterest, chrLenFileName);
+    string sampleOutFileName = createPileUpFile( outputDir, pathToSamtools, sample_MateFile, intersected, fastaFile,minQualPerPos);
     //BAFtumor = computeBAF(sampleCopyNumber, _sample, outputDir, "_sample");
-    string _control = createPileUpFile( controlName, pathToSamtools, control_Matefile, intersected, fastaFile,minQualPerPos);
+
+    if (controlName.compare("")!=0) {
+        string controlOutFileName = createPileUpFile( controlName, pathToSamtools, control_Matefile, intersected, fastaFile,minQualPerPos);
+    }
     //computeBAF(controlCopyNumber, _control, outputDir, "_control");
     remove(intersected.c_str()); // */
 }
@@ -125,14 +131,13 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
         return flanks;
 }
 
-void BAFpileup::calculateNewBoundaries(std::string targetBed, int flanks, std::string outputDir)
+void BAFpileup::calculateNewBoundaries(std::string targetBed, int flanks, std::string bedFileWithRegionsOfInterest)
 {
         std::string const& captureFile = targetBed ;
         ifstream file (captureFile.c_str());
 
         ofstream myfile;
-        std::string Newfile = outputDir + "_NewCaptureRegions" +  ".bed";
-        myfile.open(Newfile.c_str());
+        myfile.open(bedFileWithRegionsOfInterest.c_str());
 
 
         if (file.is_open())  {
@@ -154,69 +159,73 @@ void BAFpileup::calculateNewBoundaries(std::string targetBed, int flanks, std::s
         }
 }
 
-void BAFpileup::printfile(std::string outputDir, std::string chrLen)
-{
-    std::string const& captureFile = chrLen ;
-    ifstream file (captureFile.c_str());
-    std::string line;
+void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegionsOfInterest, std::string chrLenFileName) {
 
-    int compt = 0;
-    while (std::getline(file,line))
-    {
-    compt++;
-    }
+    //reading the file with the chromosome length information
+    std::vector<std::string> chr_names;
+	std::vector<int> lengths;
+	ifstream file(chrLenFileName.c_str());
+	if (!file.is_open()) {
+        cerr << "Error: unable to open "+chrLenFileName+"\n" ;
+        exit(-1);
+	}
+	string line;
+	string name;
+	int value = 0;
+	bool isFai=0;
+	if (chrLenFileName.substr(chrLenFileName.length()-3,3).compare("fai")==0) {isFai=1;}
+	while (std::getline(file,line)) {
 
-    int l=0;
-    file.clear();
-    file.seekg(0);
+		if (! line.length()) continue;
+		if (line[0] == '#') continue;
 
-    chr_names = vector<string>(compt);
-    ends_ = vector<int>(compt,0);
+		std::vector<std::string> strs = split(line, '\t');
+		if (strs.size()<2) {
+		    cerr << "uncorrect file with chromosomes "<< chrLenFileName <<"\nUse tab-delimited format:\n1\tchr1\t249250621\nor\nchr1\t249250621\n";
+		}
+		if (strs.size()==2 || strs[0].substr(0,3)=="chr" || isFai) {
+			name  = strs[0];
+			value = atoi(strs[1].c_str());
+		}
+		if (strs.size()>=3 && strs[0].substr(0,3)!="chr") {
+			name  = strs[1];
+			value = atoi(strs[2].c_str());
+		}
+		strs.clear();
+		myReplace(name, " ", "");
 
-    int i = 0;
-    if (file.is_open() & l < compt)
-        {
-        while (std::getline(file,line))
-            {
-            i = 0;
-            while (line[i] != '\t')
-                {
-                i++;
-                }
-            i++;
-            while (line[i] != '\t')
-                {
-                chr_names[l] += line[i];
-                i++;
-                }
-            i++;
-            string endtmp;
-            while (line[i] != '\t')
-                {
-                endtmp += line[i];
-                i++;
-                }
-            ends_[l] = atoi(endtmp.c_str());
-            endtmp.clear();
-            l++;
-            }
-        }
+		//delete "Chr"
+		string::size_type pos = 0;
+		if ( (pos = name.find("chr", pos)) != string::npos )
+			name.replace( pos, 3, "" );
+		if (value>0) {
+		    chr_names.push_back(name);
+            lengths.push_back(value);
+            //cout << name << "\t" << value << "\n";
+		}
+	}
+	file.close();
+	cout << "..File "<<chrLenFileName<<" was read to create a miniPileup\n";
 
     ofstream myfile;
-    std::string Newfile = outputDir + "_NewCaptureRegions" +  ".bed";
-    myfile.open(Newfile.c_str());
+    myfile.open(bedFileWithRegionsOfInterest.c_str());
     for (int i = 0; i < chr_names.size(); i++)
         {
-        myfile << chr_names[i] << "\t" << "0" << "\t" << ends_[i] << "\n";
+        myfile << "chr"<< chr_names[i] << "\t" << "1" << "\t" << lengths[i] << "\n";
         }
     myfile.close();
 }
 
-std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::string outputDir, std::string targetBed, std::string chrLen)
+std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::string outputDir, std::string bedFileWithRegionsOfInterest, std::string chrLen)
 {
     FILE *stream;
-    string NewCaptRegions = outputDir + "_NewCaptureRegions" +  ".bed";
-    string command = pathToBedtools_ +" intersect -a " + makeminipileup + " -b " + NewCaptRegions + " > " + outputDir + "_SNPinNewCaptureRegions.bed";
+    std::string intersected = outputDir + "_SNPinNewCaptureRegions.bed";
+
+    if (makeminipileup.substr(makeminipileup.size()-3,3).compare("vcf")==0) {
+        intersected = outputDir + "_SNPinNewCaptureRegions.vcf";
+    }
+
+    string command = pathToBedtools_ +" intersect -a " + makeminipileup + " -b " + bedFileWithRegionsOfInterest + " > " + intersected;
 
     stream =
     #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
@@ -231,77 +240,28 @@ std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::st
     pclose(stream);
     #endif
 
-    remove(NewCaptRegions.c_str());
-    std::string intersected = outputDir + "_SNPinNewCaptureRegions.bed";
+    remove(bedFileWithRegionsOfInterest.c_str());
 
     if (makeminipileup.substr(makeminipileup.size()-3,3).compare("bed")==0) {
         return intersected;
     }
+
     //else: VCF input format; need to transform into BED
     ifstream file (intersected.c_str());
-    std:: string line;
-
-    int nb_snp = 0;
-    while (std::getline(file,line))
-                {
-                    nb_snp++;
-                }
-    int l = 0;
-    int i = 0;
-
-    file.clear();
-    file.seekg(0);
-
-    vector<string> chromosome = vector<string>(nb_snp);
-    snp_pos = vector<string>(nb_snp);
-    ref_base = vector<string>(nb_snp);
-    alt_base = vector<string>(nb_snp);
-    while (std::getline(file,line) && l < nb_snp)
-                {
-                    i = 0;
-                    while (line[i] != '\t')
-                        {
-                        chromosome[l] += line[i];
-                        i++;
-                        }
-                        i++;
-                    while (line[i] != '\t')
-                        {
-                        snp_pos[l] += line[i];
-                        i++;
-                        }
-                        i++;
-                    while (line[i] != '\t')
-                        {
-                        i++;
-                        }
-                        i++;
-                    while (line[i] != '\t')
-                        {
-                        ref_base[l] += line[i];
-                        i++;
-                        }
-                        i++;
-                    while (line[i] != '\t')
-                        {
-                        alt_base[l] += line[i];
-                        i++;
-                        }
-                        i++;
-                    while (line[i] != '\n')
-                        {
-                        i++;
-                        }
-                    l++;
-                }
     ofstream myfile;
-    myfile.open(intersected.c_str());
-    for (i = 0; i < nb_snp; i++)
-    {
-    myfile << chromosome[i] << "\t"<< atoi(snp_pos[i].c_str()) -1 << "\t" <<  atoi(snp_pos[i].c_str()) << "\t" << ref_base[i] << "\t" << alt_base[i] <<"\n";
+    std::string intersectedBed = outputDir + "_SNPinNewCaptureRegions.bed";
+    myfile.open(intersectedBed.c_str());
+    std:: string line;
+    int nb_snp = 0;
+    while (std::getline(file,line))  {
+        nb_snp++;
+        std::vector<std::string> strs = split(line, '\t');
+        myfile << strs[0] << "\t"<< atoi(strs[1].c_str()) -1 << "\t" <<  atoi(strs[1].c_str()) << "\t" << strs[3] << "\t" << strs[4]<<"\n";
     }
     myfile.close();
-    return intersected;
+    file.close();
+    remove(intersected.c_str());
+    return intersectedBed;
 }
 
 
@@ -309,7 +269,7 @@ std::string BAFpileup::createPileUpFile(std::string outputDir, std::string samto
 {
     string minipileup = outputDir + "_minipileup" +".pileup";
     FILE *stream;
-    string command = samtools_path + " mpileup -f "+fastaFile+" -d8000 -Q "+int2string(minQualPerPos)+" -q 1 -l " + intersected + " " + control_MateFile + " > " + minipileup; //discard reads wit 0 mapping quality
+    string command = samtools_path + " mpileup -f "+fastaFile+" -d 8000 -Q "+int2string(minQualPerPos)+" -q 1 -l " + intersected + " " + control_MateFile + " > " + minipileup; //discard reads wit 0 mapping quality
 
 
      stream =
