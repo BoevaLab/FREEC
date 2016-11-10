@@ -20,7 +20,7 @@ PROG = freec
 
 all: $(PROG)
 
-$(PROG): main.o ConfigFile.o Chameleon.o GenomeDensity.o Help.o myFunc.o KernelVector.o ChrDensity.o ChrCopyNumber.o GenomeCopyNumber.o chisquaredistr.o ap.o igammaf.o gammafunc.o normaldistr.o ablasf.o ablas.o ortfac.o sblas.o rotations.o reflections.o linreg.o hblas.o descriptivestatistics.o creflections.o blas.o bdsvd.o svd.o ialglib.o EntryCNV.o SNPinGenome.o SNPatChr.o SNPposition.o binomialdistr.o ibetaf.o ThreadPool.o BAFpileup.o RSSerror.o SeekSubclones.o
+$(PROG): main.o ConfigFile.o Chameleon.o GenomeDensity.o Help.o myFunc.o KernelVector.o ChrDensity.o ChrCopyNumber.o GenomeCopyNumber.o chisquaredistr.o ap.o igammaf.o gammafunc.o normaldistr.o ablasf.o ablas.o ortfac.o sblas.o rotations.o reflections.o linreg.o hblas.o descriptivestatistics.o creflections.o blas.o bdsvd.o svd.o ialglib.o EntryCNV.o SNPinGenome.o SNPatChr.o SNPposition.o binomialdistr.o ibetaf.o ThreadPool.o BAFpileup.o SeekSubclones.o
 	 g++ -m64 $(CXXOPT) -o $(PROG) $+ $(EXTRA_LDFLAGS)
 
 init:
