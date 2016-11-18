@@ -113,7 +113,8 @@ void GenomeCopyNumber::setBAFtrue() {
     hasBAF_=1;
 }
 
-void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation, std::string const& chrLenFileName, int windowSize , int step, std::string targetBed) {
+void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation, std::string const& chrLenFileName,
+                    int windowSize , int step, std::string targetBed ) {
     if (WESanalysis == false)  {
         if (step == NA)
             step = windowSize;
@@ -127,6 +128,8 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
     else {
         step_ = step;
     }
+    cout << "CHECK0001:"<<getNumberOfChromosomes()<< "\n";
+
 	//reading the file with genome information
 	std::vector<std::string> names;
 	std::vector<int> lengths;
@@ -138,20 +141,30 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 		chrCopyNumber_.push_back(chrCopyNumber);
 	}
 	//read mateFileName and calculate copyNumber
+    cout << "CHECK0002:"<<getNumberOfChromosomes()<< "\n";
+
 
 	GenomeCopyNumber::fillMyHash(mateFileName ,inputFormat, matesOrientation, windowSize, step, targetBed);
 
+    cout << "CHECK0003:"<<getNumberOfChromosomes()<< "\n";
+
     //remove chromosomes that do to have reads or exons:
-    vector <int> toErase;
-    for (int i = 0; i < (int) names.size(); i++) {
-		if (chrCopyNumber_[i].getExons_Countchr()==0) {
-            toErase.push_back(i);
-		}
-	}
-	for (int i=toErase.size()-1;i>=0;i--) {
-        chrCopyNumber_.erase(chrCopyNumber_.begin()+toErase[i]);
-        chromosomesInd_.erase(names[toErase[i]]);
-	}
+
+    cout << "CHECK0004:"<<getNumberOfChromosomes()<< "\n";
+
+    if (targetBed != "") {
+        vector <int> toErase;
+        for (int i = 0; i < (int) names.size(); i++) {
+            if (chrCopyNumber_[i].getExons_Countchr()==0) {
+                toErase.push_back(i);
+            }
+        }
+        for (int i=toErase.size()-1;i>=0;i--) {
+            chrCopyNumber_.erase(chrCopyNumber_.begin()+toErase[i]);
+            chromosomesInd_.erase(names[toErase[i]]);
+        }
+    }
+    cout << "CHECK0005:"<<getNumberOfChromosomes()<< "\n";
 
 }
 
@@ -521,7 +534,7 @@ void GenomeCopyNumber::setAllNormal () {
 
 void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedGC, float maxExpectedGC) {
 
-    //try degree 3 and 4, SELECT THE ONE WITH LESS ITTERATIONS:
+     //try degree 3 and 4, SELECT THE ONE WITH LESS ITTERATIONS:
     int minDegreeToTest = 3;
     int maxDegreeToTest = 4;
     int selectedDegree=minDegreeToTest;
@@ -529,6 +542,7 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
     int bestNumberOfIterations=maximalNumberOfIterations;
    // int bestSqareError=INFINITY;
 
+    cout << "CHECK7.61:"<< chrCopyNumber_.size() << "\n";
 
 
     vector <float> y; //y ~ ax^2+bx+c
@@ -537,6 +551,7 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
     //fill x and y:
     vector<ChrCopyNumber>::iterator it;
     for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+            cout << "CHECK7.7:"<< it->getValueAt(145) << " "<< it->getValueAt(345) << "\n";
 
             if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
                 // if uniqueMatch, do correction to mappability

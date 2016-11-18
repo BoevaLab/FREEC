@@ -212,13 +212,13 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
             }
 
 
-            exons_Countchr = length_;
+            exons_Countchr_ = length_;
 
-			readCount_ = vector<float>(exons_Countchr,0);
-			copy_number_subc = vector<int>(exons_Countchr,0);
-			population_subc = vector<float>(exons_Countchr,0);
+			readCount_ = vector<float>(exons_Countchr_,0);
+			copy_number_subc = vector<int>(exons_Countchr_,0);
+			population_subc = vector<float>(exons_Countchr_,0);
 
-			cout << "Number of exons analysed in chromosome "<< chromosome_ << " : " << exons_Countchr << "\n";
+			cout << "Number of exons analysed in chromosome "<< chromosome_ << " : " << exons_Countchr_ << "\n";
 
         }else {
 			std::cerr << "Failed to open " << captureFile << "\n";
@@ -376,7 +376,7 @@ int ChrCopyNumber::getEndAtBin(int i) {
 }
 
 int ChrCopyNumber::getExons_Countchr() {
-	return exons_Countchr;
+	return exons_Countchr_;
 }
 
 void ChrCopyNumber::setNotNprofileAt(int i, float value) {

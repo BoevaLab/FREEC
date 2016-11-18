@@ -158,7 +158,7 @@ private:
  //   std::vector <std::string> chr_names;
 	std::vector <std::string> genes_names;
   //  int exons_Count;
-	int exons_Countchr;
+	int exons_Countchr_;
 	std::vector <int> copy_number_subc;
 	std::vector <float> population_subc;
 

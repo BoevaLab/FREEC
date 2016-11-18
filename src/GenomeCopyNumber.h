@@ -102,6 +102,11 @@ public:
 	long getNormalNumberOfPairs();
 	std::vector <EntryCNV> getCNVs ();
     int getPloidy();
+	ChrCopyNumber& getChrCopyNumberAt(int index) {return chrCopyNumber_[index];}
+	int getStep() const {return step_;}
+    bool getWESanalysis();
+    double getGenomeRefSize();
+    int getNumberOfChromosomes();
 
 
 	void setPloidy(int ploidy);
@@ -114,18 +119,13 @@ public:
     bool ifHasBAF();
     void setSex(std::string sex);
 
-	ChrCopyNumber& getChrCopyNumberAt(int index) {return chrCopyNumber_[index];}
-	int getStep() const {return step_;}
 
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
     void setSeekSubclones(bool seekSubclones);
-    bool getWESanalysis();
-    double getGenomeRefSize();
-    void setmakingPileup(bool makingPileup_given);
+     void setmakingPileup(bool makingPileup_given);
     double Percentage_GenomeExplained(int &);
     long double calculateRSS(int ploidy);
-    int getNumberOfChromosomes();
 
 
 private:
