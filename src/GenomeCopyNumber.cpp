@@ -128,7 +128,6 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
     else {
         step_ = step;
     }
-    cout << "CHECK0001:"<<getNumberOfChromosomes()<< "\n";
 
 	//reading the file with genome information
 	std::vector<std::string> names;
@@ -141,16 +140,13 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 		chrCopyNumber_.push_back(chrCopyNumber);
 	}
 	//read mateFileName and calculate copyNumber
-    cout << "CHECK0002:"<<getNumberOfChromosomes()<< "\n";
 
 
 	GenomeCopyNumber::fillMyHash(mateFileName ,inputFormat, matesOrientation, windowSize, step, targetBed);
 
-    cout << "CHECK0003:"<<getNumberOfChromosomes()<< "\n";
 
     //remove chromosomes that do to have reads or exons:
 
-    cout << "CHECK0004:"<<getNumberOfChromosomes()<< "\n";
 
     if (targetBed != "") {
         vector <int> toErase;
@@ -164,7 +160,6 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
             chromosomesInd_.erase(names[toErase[i]]);
         }
     }
-    cout << "CHECK0005:"<<getNumberOfChromosomes()<< "\n";
 
 }
 
@@ -542,7 +537,6 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
     int bestNumberOfIterations=maximalNumberOfIterations;
    // int bestSqareError=INFINITY;
 
-    cout << "CHECK7.61:"<< chrCopyNumber_.size() << "\n";
 
 
     vector <float> y; //y ~ ax^2+bx+c
@@ -551,7 +545,6 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
     //fill x and y:
     vector<ChrCopyNumber>::iterator it;
     for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
-            cout << "CHECK7.7:"<< it->getValueAt(145) << " "<< it->getValueAt(345) << "\n";
 
             if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
                 // if uniqueMatch, do correction to mappability
@@ -1952,7 +1945,6 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_genomeLength(int breakPointT
     map<int, double>::iterator itProb;
     for ( itProb=copyNumberProbs_.begin() ; itProb != copyNumberProbs_.end(); itProb++ )
     cout << (*itProb).first << " => " << (*itProb).second << "\n";
-    cout << "size of CNVs_ : "<< CNVs_.size() << "\n";
 
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
 		float previousLevel = NA;

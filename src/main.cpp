@@ -775,7 +775,6 @@ int main(int argc, char *argv[])
         } else {
             if (!sample_copyNumber_pileup_read && has_window) {
                     sampleCopyNumber.readCopyNumber(sample_MateFile, sample_inputFormat, sample_mateOrientation,chrLenFile, window, step);
-                cout << "CHECK1:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
             } else if (!sample_copyNumber_pileup_read && !has_window) {
                 sampleCopyNumber.readCopyNumber(sample_MateFile, sample_inputFormat, sample_mateOrientation,chrLenFile, coefficientOfVariation);
                 step = sampleCopyNumber.getWindowSize(); //in this case step=windowSize
@@ -788,7 +787,6 @@ int main(int argc, char *argv[])
             step= window;
         }
         has_window = true; //now we know window size and even step!
-                cout << "CHECK2:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
 
     } else   {
         if (has_sample_mateCopyNumberFile) {
@@ -815,8 +813,6 @@ int main(int argc, char *argv[])
         }
        controlCopyNumber.setSex(sex);
     }
-
-                cout << "CHECK3:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
 
     //if it is a TARGETED resequencing experiment, delete all info outside of the target regions
 	if(ifTargeted && WESanalysis == false) {
@@ -875,8 +871,6 @@ int main(int argc, char *argv[])
             cout << "..Mappability track from "<< gemMapFile <<" has been added to "<< GCprofileFile <<"\n";
         }
 	}
-    cout << "CHECK4:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
-
 	if (isControlIsPresent && isUseGC ) {// && WESanalysis == false removed in v9.4 //then read CG-content and associate it with the control data.
 		cout << "..using GC-content to normalize the control profile\n";
 		controlCopyNumber.readCGprofile(GCprofileFile); //the file with CG-content already exists
@@ -910,7 +904,6 @@ int main(int argc, char *argv[])
     for (int i=0;i < ploidies.size(); i++ ) {
         ploidy = ploidies[i];
         cout << "..Running FREEC with ploidy set to " << ploidy << "\n";
-        cout << "CHECK5:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
 
         runWithDefinedPloidy(ploidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
@@ -1026,7 +1019,6 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         sampleCopyNumber.setPloidy(ploidy);
         sampleCopyNumber.setNormalContamination(knownContamination);
 
-        cout << "CHECK6:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
 
         if (isControlIsPresent) {
             if ((!forceGC && !(has_BAF) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0))) { //normalize sample density with control density
@@ -1075,7 +1067,6 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
 
         } else { // no Control present
             if (degree==NA) {
-                cout << "CHECK7:"<<sampleCopyNumber.getNumberOfChromosomes()<< "\n";
                 sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
 
             }
