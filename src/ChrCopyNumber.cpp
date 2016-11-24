@@ -31,7 +31,6 @@ ChrCopyNumber::ChrCopyNumber(void)
 }
 
 ChrCopyNumber::ChrCopyNumber(std::string const& chrName) {
-    copy_number_subc = vector<int>(length_,0);
 	chromosome_ = chrName;
 	isMedianCalculated_ = false;
 	isSmoothed_ = false;
@@ -54,8 +53,6 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 	length_ = chrLength/windowSize+1;
 	coordinates_ = vector<int>(length_);
 	readCount_ = vector<float>(length_,0);
-    copy_number_subc = vector<int>(length_,0);
-    population_subc = vector<float>(length_,0);
 	for (int i = 0; i<length_; i++) {
 		coordinates_[i] = i*windowSize;
 	}
@@ -69,8 +66,6 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 	chromosome_ = chrName;
 	isMedianCalculated_ = false;
 	isSmoothed_ = false;
-    copy_number_subc = vector<int>(length_,0);
-    population_subc = vector<float>(length_,0);
 	ploidy_=NA;
 	if (targetBed == "")     {
         if (windowSize ==0) {
@@ -215,8 +210,6 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
             exons_Countchr_ = length_;
 
 			readCount_ = vector<float>(exons_Countchr_,0);
-			copy_number_subc = vector<int>(exons_Countchr_,0);
-			population_subc = vector<float>(exons_Countchr_,0);
 
 			cout << "Number of exons analysed in chromosome "<< chromosome_ << " : " << exons_Countchr_ << "\n";
 
@@ -333,24 +326,24 @@ void ChrCopyNumber::setValueAt(int i, float val) {
 }
 void ChrCopyNumber::setCN_subc(int i, int CN_subc)
 {
-    cerr << copy_number_subc[i];
-    copy_number_subc[i] = CN_subc;
+    //cerr << copy_number_subc_[i]; //WHAT IS THIS OUTPUT, CARINO?
+    copy_number_subc_[i] = CN_subc; //THIS VECTOR IS EMPTY!
 }
 
 int ChrCopyNumber::getCN_subc(int i)
 {
-    return copy_number_subc[i];
+    return copy_number_subc_[i];
 }
 
 
 void ChrCopyNumber::setPopulation_subc(int i, float pop_subc)
 {
-    population_subc[i] = pop_subc;
+    population_subc_[i] = pop_subc;
 }
 
 float ChrCopyNumber::getPopulation_subc(int i)
 {
-    return population_subc[i] ;
+    return population_subc_[i] ;
 }
 
 
@@ -429,11 +422,13 @@ void ChrCopyNumber::setVectorLength(int length){
 
 void ChrCopyNumber::setCN_subcLength(int len)
 {
-    copy_number_subc = vector<int>(len,-1);
+    copy_number_subc_.clear();
+    copy_number_subc_ = vector<int>(len,0);
 }
 void ChrCopyNumber::setpop_subcLength(int len)
 {
-    population_subc = vector<float>(len,-1);
+    population_subc_.clear();
+    population_subc_ = vector<float>(len,0);
 }
 
 void ChrCopyNumber::setChrLength(int chrLength) {
@@ -1559,6 +1554,12 @@ float ChrCopyNumber::getEstimatedBAFuncertaintyAtI(int i) {
 float ChrCopyNumber::getSmoothedProfileAtI(int i) {
 	return smoothedProfile_[i];
 }
+
+float ChrCopyNumber::getSmoothedForInterval(int start , int end) {
+   return get_median (smoothedProfile_,start,end);
+}
+
+
 void ChrCopyNumber::pushSmoothedProfile(float value) {
 	smoothedProfile_.push_back(value);
 }
@@ -1567,6 +1568,21 @@ int ChrCopyNumber::getEndsSize() {
 	return ends_.size();
 }
 
+void ChrCopyNumber::setLookingForSubclones(bool value) {
+    isLookingForSubclones_=value;
+    if (value) {
+        if (coordinates_.size()==0) {cerr << "Warning: you should intialize the ChrCopyNumber object before calling this function!!!\n";}
+        if (copy_number_subc_.size()==0) {
+            copy_number_subc_=vector <int> (coordinates_.size(),0);
+        }
+        if (population_subc_.size()==0) {
+            population_subc_=vector <float> (coordinates_.size(),0.0);
+        }
+    }
+}
+
+
+
 ChrCopyNumber::~ChrCopyNumber(void)
 {
 	coordinates_.clear();
@@ -1574,8 +1590,8 @@ ChrCopyNumber::~ChrCopyNumber(void)
 	smoothedProfile_.clear();
 	fragmentNotNA_lengths_.clear(); //TODO all other vectors
 	length_ = 0;
-	copy_number_subc.clear();
-	population_subc.clear();
+	copy_number_subc_.clear();
+	population_subc_.clear();
 }
 
 void ChrCopyNumber::createBAF(float value) {

@@ -31,7 +31,7 @@ GenomeCopyNumber::GenomeCopyNumber(void)
 	ifUsedControl_ = false;
 	normalContamination_=0;
 	sex_="";
-	SeekingSubc = false;
+	SeekingSubc_ = false;
 }
 
 void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation, std::string const& chrLenFileName, float coefficientOfVariation ) {
@@ -893,6 +893,7 @@ void GenomeCopyNumber::setPloidy(int ploidy) {
 
 }
 
+
 double GenomeCopyNumber::calculateMedianRatioAround (float interval, float around) {
 
 	float maxCG = around+interval;
@@ -1069,11 +1070,11 @@ long double GenomeCopyNumber::calculateRSS(int ploidy)
 	map<string,int>::iterator it;
 	for (it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
 		string chrNumber = (*it).first;
-		if ( ( pos = chrNumber.find("chr", pos)) != string::npos )
+		if ( ( pos = chrNumber.find("chr")) != string::npos )
 			chrNumber.replace( pos, 3, "" );
-        if ( ( pos = chrNumber.find("X", pos)) != string::npos ) 		//exclude X and Y from the analysis
+        if ( ( pos = chrNumber.find("X")) != string::npos ) 		//exclude X and Y from the analysis
             continue;
-        if ( ( pos = chrNumber.find("Y", pos)) != string::npos )
+        if ( ( pos = chrNumber.find("Y")) != string::npos )
             continue;
 		int index = findIndex(chrNumber);
 		int length = chrCopyNumber_[index].getLength();
@@ -1485,9 +1486,9 @@ void GenomeCopyNumber::printRatio(std::string const& outFile, bool ifBedGraphOut
             {
             file << "\tGene";
             }
-        if (SeekingSubc == true)
+        if (SeekingSubc_ == true)
             {
-            file << "\tSubclones_cn\tSubclones_pop";
+            file << "\tSubclone_CN\tSubclone_Population";
             }
         file << "\n";
         for ( it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
@@ -2649,7 +2650,7 @@ void GenomeCopyNumber::readCopyNumber(std::string const& inFile) {
 			chrCopyNumber_[(*it).second].setWindowSize(windowSize_);
 			int length = chrCopyNumber_[(*it).second].getValues().size();
 			chrCopyNumber_[(*it).second].setVectorLength(length);
-			if (SeekingSubc == true)
+			if (SeekingSubc_ == true)
                 {
                 chrCopyNumber_[(*it).second].setCN_subcLength(length+3);
                 chrCopyNumber_[(*it).second].setpop_subcLength(length+3);
@@ -2877,8 +2878,8 @@ void GenomeCopyNumber::printRatio(std::string const& chr, std::ofstream & file, 
             if (WESanalysis == true && chrCopyNumber_[index].getGeneNameAtBin(i)!= "")   {
                 file <<  "\t" << chrCopyNumber_[index].getGeneNameAtBin(i);
             }
-            if (SeekingSubc == true)  {
-                file << "\t" << chrCopyNumber_[index].getCN_subc(i) << "\t" << chrCopyNumber_[index].getPopulation_subc(i);
+            if (SeekingSubc_ == true)  {
+                file << "\t" << chrCopyNumber_[index].getCN_subc(i) << "\t" << chrCopyNumber_[index].getPopulation_subc(i); //check that it is still there
             }
 
             file << "\n";
@@ -3187,11 +3188,11 @@ float GenomeCopyNumber::evaluateContamination () {
 	map<string,int>::iterator it;
 	for ( it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
 		string chrNumber = (*it).first;
-		if ( ( pos = chrNumber.find("chr", pos)) != string::npos )
+		if ( ( pos = chrNumber.find("chr")) != string::npos )
 			chrNumber.replace( pos, 3, "" );
-        if ( ( pos = chrNumber.find("X", pos)) != string::npos ) 		//exclude X and Y from the analysis
+        if ( ( pos = chrNumber.find("X")) != string::npos ) 		//exclude X and Y from the analysis
             continue;
-        if ( ( pos = chrNumber.find("Y", pos)) != string::npos )
+        if ( ( pos = chrNumber.find("Y")) != string::npos )
             continue;
 		int index = findIndex(chrNumber);
 		if (index == NA) {
@@ -3241,11 +3242,11 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
 
 	for ( it=chromosomesInd_.begin() ; it != chromosomesInd_.end(); it++ ) {
 		string chrNumber = (*it).first;
-		if ( ( pos = chrNumber.find("chr", pos)) != string::npos )
+		if ( ( pos = chrNumber.find("chr")) != string::npos )
 			chrNumber.replace( pos, 3, "" );
-        if ( ( pos = chrNumber.find("X", pos)) != string::npos ) 		//exclude X and Y from the analysis
+        if ( ( pos = chrNumber.find("X")) != string::npos ) 		//exclude X and Y from the analysis
             continue;
-        if ( ( pos = chrNumber.find("Y", pos)) != string::npos )
+        if ( ( pos = chrNumber.find("Y")) != string::npos )
             continue;
 		int index = findIndex(chrNumber);
 		if (index == NA) {
@@ -4423,7 +4424,10 @@ makingPileup = makingPileup_given;
 
 void GenomeCopyNumber::setSeekSubclones(bool seekSubclones)
 {
-    SeekingSubc = seekSubclones;
+    SeekingSubc_ = seekSubclones;
+    vector<ChrCopyNumber>::iterator it;
+	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ )
+            it->setLookingForSubclones(seekSubclones);
 }
 
 void* GenomeCopyNumber_readMateFile_wrapper(void *arg)
@@ -4467,7 +4471,7 @@ double GenomeCopyNumber::Percentage_GenomeExplained(int & unexplainedChromosomes
                 if (fragmentLength>threshold) {
                     numberOfPoints+=fragmentLength;
                     if (fragment_median2!=NA && abs(fragment_median2-round_by_ploidy(fragment_median2,ploidy_)) >= 1.0/3/ploidy_) {
-                        cout <<  "Unexplained segment: "<<fragment_median2 << "\t";
+                        //cout <<  "Unexplained segment: "<<fragment_median2 << "\t";
                             unexplained=1;
                             sum_frags+=fragmentLength;
                     }

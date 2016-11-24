@@ -118,11 +118,10 @@ public:
     void setSambamba(std::string const& pathToSambamba, std::string const& SambambaThreads_);
     bool ifHasBAF();
     void setSex(std::string sex);
-
+    void setSeekSubclones(bool seekSubclones);
 
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
-    void setSeekSubclones(bool seekSubclones);
      void setmakingPileup(bool makingPileup_given);
     double Percentage_GenomeExplained(int &);
     long double calculateRSS(int ploidy);
@@ -130,11 +129,11 @@ public:
 
 private:
 
-    std::vector<ChrCopyNumber> chrCopyNumber_; //should stay private !!! why is it public now, Carino????
-	std::map<std::string, int> chromosomesInd_; //should stay private
+    std::vector<ChrCopyNumber> chrCopyNumber_; //should stay private !!!
+	std::map<std::string, int> chromosomesInd_; //should stay private!!!
     bool WESanalysis;
     bool makingPileup;
-    bool SeekingSubc;
+    bool SeekingSubc_;
 	void fillMyHash(std::string const& mateFileName , std::string const& inputFormat, std::string const& matesOrientation, int windowSize, int step, std::string targetBed = "");
 	int windowSize_;
 	int step_;

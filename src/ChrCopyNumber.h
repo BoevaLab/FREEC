@@ -148,8 +148,8 @@ public:
 	float getPopulation_subc(int i);
 	void setCN_subcLength(int len);
 	void setpop_subcLength(int len);
-
-
+    void setLookingForSubclones(bool);
+    float getSmoothedForInterval(int start , int end);
 
 private:
    // std::vector <std::string> coordinatesTmp_;
@@ -159,9 +159,10 @@ private:
 	std::vector <std::string> genes_names;
   //  int exons_Count;
 	int exons_Countchr_;
-	std::vector <int> copy_number_subc;
-	std::vector <float> population_subc;
+	std::vector <int> copy_number_subc_;
+	std::vector <float> population_subc_;
 
+	bool isLookingForSubclones_;
 
 
     int ploidy_;

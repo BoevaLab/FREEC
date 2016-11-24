@@ -128,7 +128,7 @@ int argmin(const std::vector<double> & myvector) {
 // Calculate median across individuals for a subset
 // ---------------------------------------------------------------------------
 float get_median(const std::vector<float> & myvector, int start, int end) {
-	if ((start>=0)&&(start<=end)&&(end <= (int)myvector.size())) {
+	if ((start>=0)&&(start<end)&&(end <= (int)myvector.size())) {
 		int ndatapoints = end-start;
 		vector<float> data (ndatapoints);
 		for (int i = start; i < end; i++)

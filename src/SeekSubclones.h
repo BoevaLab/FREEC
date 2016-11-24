@@ -27,8 +27,8 @@ class SeekSubclones
     protected:
         int ploidy_;
         float minimal_pop_;
-        std::vector <int> copynumber;
-        std::vector <float> population;
+        std::vector <int> copynumber_;
+        std::vector <float> population_;
     private:
 };
 

@@ -73,9 +73,9 @@ static const char* get_conf_file(int argc, char *argv[])
 static void thread_init(unsigned int max_threads, unsigned int thread_verbose)
 {
   if (max_threads > 1) {
-	std::cout << "MT-mode using " << max_threads << " threads\n";
+	std::cout << "Multi-threading mode using " << max_threads << " threads\n";
   } else {
-	std::cout << "Non MT-mode\n";
+	std::cout << "Non Multi-threading mode\n";
   }
 
   ThreadPoolManager::init(max_threads, thread_verbose);
@@ -388,6 +388,15 @@ int main(int argc, char *argv[])
 	}
     string SNPinfoFile = std::string(cf.Value("BAF","SNPfile",""));
 
+    if (makePileup != "false" && SNPinfoFile=="") {
+        if (makePileup.substr(makePileup.size()-3,3)=="vcf" || makePileup.substr(makePileup.size()-6,6)=="vcf.gz") {
+            SNPinfoFile=makePileup;
+        } else {
+            cerr << "Warning: you have to provide a filename with the \"SNPfile\" option if you wish to calculate BAF profiles\n";
+            cerr << "SNPfile can be in .txt, .txt.gz, .vcf. or .vcf.gz format\n";
+        }
+    }
+
     std::string targetBed = std::string(cf.Value("target","captureRegions",""));
     bool logLogNorm = false;
     //if (ifTargeted)logLogNorm=true;
@@ -537,7 +546,7 @@ int main(int argc, char *argv[])
     std::vector<std::string> strs;
     split(tryOtherPloidy, ',', strs);
     if (strs.size()>1) {
-        cout << "..FREEC will try to guess the correct ploidy(for each ploidy specified in 'ploidy' parameter)\n..It will try ploidies: ";
+        cout << "..FREEC will try to guess the correct ploidy (for each ploidy specified in 'ploidy' parameter)\n..It will try ploidies: ";
         for (int i = 0; i < strs.size(); i++)   {
             ploidies.push_back(atoi(strs[i].c_str()));
             cout << ploidies.back()<<endl;
@@ -575,9 +584,9 @@ int main(int argc, char *argv[])
 
     float seekSubclones = (float)cf.Value("general","minimalSubclonePresence", 100);
     if (seekSubclones==0  ||seekSubclones==1) {seekSubclones==100;}
-    if (seekSubclones>0  ||seekSubclones<1) {seekSubclones*=100;}
+    if (seekSubclones>0  && seekSubclones<1) {seekSubclones*=100;}
     if (seekSubclones>0 &&seekSubclones<100)
-        cout << "..Control-FREEC will look for subclones present at least in "<<seekSubclones<<"% cells\n";
+        cout << "..Control-FREEC will look for subclones present in at least "<<seekSubclones<<"% of cell population\n";
     else
         cout << "..Control-FREEC will not look for subclones\n";
 
@@ -651,18 +660,13 @@ int main(int argc, char *argv[])
 	sampleCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
 	sampleCopyNumber.setWESanalysis(WESanalysis);
 	sampleCopyNumber.setmakingPileup(makingPileup);
-	if (seekSubclones < 100 && seekSubclones>0)
-        {
-        sampleCopyNumber.setSeekSubclones(true);
-        }
+
 
 	GenomeCopyNumber controlCopyNumber;
 	controlCopyNumber.setSamtools(pathToSamtools);
 	controlCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
 	controlCopyNumber.setWESanalysis(WESanalysis);
 	controlCopyNumber.setmakingPileup(makingPileup);
-	if (seekSubclones < 100 && seekSubclones>0)
-        controlCopyNumber.setSeekSubclones(true);
 
 	SNPinGenome snpingenome;
 	snpingenome.setWESanalysis(WESanalysis);
@@ -684,7 +688,7 @@ int main(int argc, char *argv[])
     if (makePileup != "false")  {
             cout << "Creating Pileup file to compute BAF profile...\n";
             minipileup.makepileup(sampleCopyNumber, controlCopyNumber, sample_MateFile, control_MateFile, myName, makePileup, sample_MateFile,
-            sample_inputFormat, sample_mateOrientation, pathToSamtools, chrLenFile, controlName, targetBed, pathToBedtools, fastaFile, minimalQualityPerPosition);
+            sample_inputFormat, sample_mateOrientation, pathToSamtools, pathToSambamba, SambambaThreads, chrLenFile, controlName, targetBed, pathToBedtools, fastaFile, minimalQualityPerPosition);
             cout << "... -> Done!\n";
             GenomeCopyNumberReadMateFileArgWrapper* readMateFileArg;
             cout << "..will use SNP positions from "<< SNPinfoFile << " to calculate BAF profiles\n";
@@ -799,6 +803,10 @@ int main(int argc, char *argv[])
     }
 
 	sampleCopyNumber.setSex(sex);
+	if (seekSubclones < 100 && seekSubclones>0) {
+        sampleCopyNumber.setSeekSubclones(true);
+    }
+
     //READ CONTROL DATA:
     if (isControlIsPresent) {
         if (has_control_mateCopyNumberFile) {
@@ -899,6 +907,8 @@ int main(int argc, char *argv[])
 		}
     }
 
+    if (seekSubclones < 100 && seekSubclones>0)
+        controlCopyNumber.setSeekSubclones(true); //CARINO, WHY DO YOU NEED TO SET IT FOR THE CONTROL?
 
 
     for (int i=0;i < ploidies.size(); i++ ) {
