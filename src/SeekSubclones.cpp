@@ -89,7 +89,7 @@ void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::st
                         for (int k = 0; k < copynumber_.size(); k++) {
                             myfile << "\t" << copynumber_[k] << "\t" << population_[k]*100 << "% \n";
                         }
-                        myfile << endl;
+                        myfile << "\n";
                         for (int k = bpstart; k < bpend; k++) { // CARINO, WHY WAS IT: k = bpstart-2; k < i-1; ???
                             samplecopynumber.getChrCopyNumberAt(index).setCN_subc(k, copynumber_[0]);
                             samplecopynumber.getChrCopyNumberAt(index).setPopulation_subc(k, population_[0]);
@@ -129,7 +129,7 @@ bool SeekSubclones::SignTest(std::vector <float>& data, float& threshold, int bo
         max_count = downvalues;
         }
     double result = 2*binomialcdistribution(max_count-1, upvalues+downvalues, 0.5); //CARINO! YOU CALULATE A WRONG P-VALUE HERE!! SHOULD BE max_count-1; I CORRECTED IT.
-    if (result < 0.01/bonfer_correction && result != 0)
+    if (result < 0.001/bonfer_correction && result != 0)
         {
         subclone = true;
         }
