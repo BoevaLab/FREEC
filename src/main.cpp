@@ -835,7 +835,17 @@ int main(int argc, char *argv[])
 
     //If GC profile for exome is needed
     //sampleCopyNumber.fillCGprofile(dirWithFastaSeq);
-    //GCprofileFile = outputDir+"GC_profile.cnp";
+
+    if (!has_GCprofile || GCprofileFile=="") {
+        if (sampleCopyNumber.getWindowSize()==0)
+            GCprofileFile = outputDir+"GC_profile.targetedRegions.cnp";
+        else {
+            stringstream ss;
+            ss << outputDir <<"GC_profile." <<window <<"bp.cnp";
+            GCprofileFile = ss.str();
+        }
+    }
+
     //sampleCopyNumber.printCGprofile(GCprofileFile);
 
     //READ GC-CONTENT:
@@ -849,14 +859,12 @@ int main(int argc, char *argv[])
 			}
         } else {// has_dirWithFastaSeq is true
 			sampleCopyNumber.fillCGprofile(dirWithFastaSeq);
-			GCprofileFile = outputDir+"GC_profile.cnp";
 			if (!has_MapFile)
                 sampleCopyNumber.printCGprofile(GCprofileFile); //if has_MapFile will print out GC-content later
         }
         if (has_MapFile) {  //read mappability file
             sampleCopyNumber.readGemMappabilityFile(gemMapFile);
             //rewrite GC-profile with mappability as the last (5th) colomn
-            GCprofileFile = outputDir+"GC_profile.cnp";
             sampleCopyNumber.printCGprofile(GCprofileFile);
             cout << "..Mappability track from "<< gemMapFile <<" has been added to "<< GCprofileFile <<"\n";
         }
@@ -867,14 +875,12 @@ int main(int argc, char *argv[])
         }
         if (has_dirWithFastaSeq) {// has_dirWithFastaSeq is true
 			sampleCopyNumber.fillCGprofile(dirWithFastaSeq);
-			GCprofileFile = outputDir+"GC_profile.cnp";
 			if (!has_MapFile)
                 sampleCopyNumber.printCGprofile(GCprofileFile); //if has_MapFile will print out GC-content later
         } else {cerr << "Error: Cannot read chromosome fasta files for the GC content correction\n";}
         if (has_MapFile) {  //read mappability file
             sampleCopyNumber.readGemMappabilityFile(gemMapFile);
             //rewrite GC-profile with mappability as the last (5th) colomn
-            GCprofileFile = outputDir+"GC_profile.cnp";
             sampleCopyNumber.printCGprofile(GCprofileFile);
             cout << "..Mappability track from "<< gemMapFile <<" has been added to "<< GCprofileFile <<"\n";
         }
@@ -918,7 +924,7 @@ int main(int argc, char *argv[])
         runWithDefinedPloidy(ploidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,
-        makePileup,seekSubclones,outputDir,unexplainedChromosomes, CompleteGenomicsData);
+        makePileup,seekSubclones,myName,unexplainedChromosomes, CompleteGenomicsData);
 
     }
 
@@ -954,7 +960,7 @@ int main(int argc, char *argv[])
         runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,makePileup,seekSubclones,
-         outputDir,unexplainedChromosomes, CompleteGenomicsData);
+         myName,unexplainedChromosomes, CompleteGenomicsData);
     }
 
 	if (has_BAF || makePileup != "false") {
@@ -1024,7 +1030,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         bool has_BAF,bool ifTargeted,bool WESanalysis,
         int degree,int intercept,bool logLogNorm,float minExpectedGC,float maxExpectedGC,float knownContamination,float breakPointThreshold,int breakPointType,int minCNAlength,
         int teloCentroFlanks, vector<double> & RSS, vector<double> &percentage_GenExpl,bool contaminationAdjustment,vector<double> &contamination, ThreadPool * thrPool,
-        ThreadPoolManager * thrPoolManager, string makePileup, float seekSubclones, std::string outputDir, vector<int> &unexplainedChromosomes, bool CompleteGenomicsData) {
+        ThreadPoolManager * thrPoolManager, string makePileup, float seekSubclones, std::string myName, vector<int> &unexplainedChromosomes, bool CompleteGenomicsData) {
         //NORMALIZE READ COUNT:
         sampleCopyNumber.setPloidy(ploidy);
         sampleCopyNumber.setNormalContamination(knownContamination);
@@ -1181,7 +1187,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         if (seekSubclones < 100 && seekSubclones>0)
             {
             cout << "Seeking eventual subclones...";
-            SeekSubclones subc(sampleCopyNumber, ploidy, outputDir, seekSubclones);
+            SeekSubclones subc(sampleCopyNumber, ploidy, myName, seekSubclones);
             cout << "-> Done!\n";
             }
              //Calculate RSS score

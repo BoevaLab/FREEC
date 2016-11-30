@@ -17,10 +17,10 @@
 class SeekSubclones
 {
     public:
-        SeekSubclones(GenomeCopyNumber & samplecopynumber, int ploidy, std::string outputDir, float minimal_pop);
+        SeekSubclones(GenomeCopyNumber & samplecopynumber, int ploidy, std::string myName, float minimal_pop);
         SeekSubclones();
         ~SeekSubclones(void);
-        void getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::string outputDir);
+        void getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::string myName);
         bool SignTest(std::vector <float>& data, float& threshold, int bonfer_correction);
         void EstimateSubclonalPopulation(std::vector <float> data, float threshold, int ploidy_);
         bool PercentageTest(std::vector <float>& data, float& threshold);

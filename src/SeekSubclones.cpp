@@ -11,19 +11,19 @@ SeekSubclones::~SeekSubclones(void)
 }
 
 
-SeekSubclones::SeekSubclones(GenomeCopyNumber & samplecopynumber, int ploidy, std::string outputDir, float minimal_pop) {
+SeekSubclones::SeekSubclones(GenomeCopyNumber & samplecopynumber, int ploidy, std::string myName, float minimal_pop) {
     ploidy_ = ploidy;
     minimal_pop_  = minimal_pop/100;
-    getSegmentsInfo(samplecopynumber, outputDir);
+    getSegmentsInfo(samplecopynumber, myName);
 }
 
 
-void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::string outputDir)
+void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::string myName)
 {
     string::size_type pos = 0;
 	map<string,int>::iterator it;
     ofstream myfile;
-    std::string Newfile = outputDir + "Subclones" +  ".txt";
+    std::string Newfile = myName + "_subclones" +  ".txt";
     double bonfer_correction = 0;
     int thresholdOnChrLengthForSubcloneDetection=20;
     int numberOfChromosomes = samplecopynumber.getNumberOfChromosomes();
