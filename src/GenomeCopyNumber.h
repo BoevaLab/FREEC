@@ -32,7 +32,7 @@ public:
 	void readCopyNumber(std::string const& inFile);
 	int readCGprofile(std::string const& inFile);
 	void readGemMappabilityFile(std::string const& inFile);
-	int processRead(std::string const& inputFormat, std::string const& matesOrientation,std::string const line);
+	//int processRead(std::string const& inputFormat, std::string const& matesOrientation,std::string const line);
     int processRead(InputFormat inputFormat, MateOrientation matesOrientation, const char* line_buffer,  int& prevInd, std::string targetBed = "", std::string mateFileName = "");
 	int processReadWithBowtie(std::string const& inputFormat, std::string const& matesOrientation,std::string const line,std::string const line2);
     int focusOnCapture (std::string const& captureFile);

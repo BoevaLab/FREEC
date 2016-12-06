@@ -346,7 +346,7 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
                     count++;
                     normalCount+=processReadWithBowtie(inputFormat_str,matesOrientation_str,line,line2);
                 } else {
-				    normalCount+=processRead(inputFormat,matesOrientation,line.c_str(),bin);
+				    normalCount+=processRead(inputFormat,matesOrientation,line.c_str(), bin,targetBed, mateFileName);
 				}
     		}
             fileMates.close();
@@ -3452,6 +3452,7 @@ void GenomeCopyNumber::addBAFinfo(SNPinGenome & snpingenome) {
 	}
 }
 
+/*
 int GenomeCopyNumber::processRead(std::string const& inputFormat, std::string const& matesOrientation,std::string const line) {
     if (! line.length()) return 0;
     int valueToReturn = 0;
@@ -3649,606 +3650,343 @@ int GenomeCopyNumber::processRead(std::string const& inputFormat, std::string co
     cerr << "Format of the input file ( "<<inputFormat<<" )was not recognized..\n";
     exit (-1);
 }
+*/
 
 int GenomeCopyNumber::processRead(InputFormat inputFormat, MateOrientation matesOrientation, const char* line_buffer, int & prevInd,std::string targetBed, std::string mateFileName)
 {
-  /*
-  if (!line.length()) {
-	return 0;
-  }
-  */
-  int read_Size =100; // in case it is not initialized (e.g. for Pileup files)
 
-  if (!*line_buffer) {
-	return 0;
-  }
+    int read_Size =100; // in case it is not initialized (e.g. for Pileup files)
 
-  int valueToReturn = 0;
+    if (!*line_buffer) {
+        return 0;
+    }
 
-  if (inputFormat == SAM_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
-	if (line_buffer[0] == '@')
-	  return 0;
-    if (WESanalysis == true)        {
-        string chr1, chr2;
-        char orient1, orient2;
-        int left,right, insert_size;
+    int valueToReturn = 0;
 
-        if (getSAMinfo(line_buffer,chr1,chr2,orient1,orient2,left,right, insert_size)) {
-            char orient1_2_str[] = {orient1, orient2, 0};
-            char orient2_1_str[] = {orient2, orient1, 0};
-            MateOrientation orient1_2 = getMateOrientation(orient1_2_str);
-            MateOrientation orient2_1 = getMateOrientation(orient2_1_str);
-            if ((matesOrientation == orient1_2 && right-left>0) || (matesOrientation == orient2_1 && right-left<0)) {
-                left = min(left, right);
-                right  = left + abs(insert_size);
-                int index = findIndex(chr1);
-                if (index!=NA && chrCopyNumber_[index].getExons_Countchr() != 0) {
-               // if (index!=NA)
-                    bool leftIsInTheWindow = false;
-                    int l = 0;
-                   // try around this value first
-                    for (l=prevInd-1; l<=prevInd+30 && l<chrCopyNumber_[index].getExons_Countchr();l++ ) {
-                        if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - insert_size)))) {
-                            leftIsInTheWindow = true;
-                            prevInd=l;
-                            break;
-                        }
-                    }
-                    if (!leftIsInTheWindow) {
-                         //start from the beginning of the chromosome
-                        int maxpos=0;
-                        for (l=0; left>=chrCopyNumber_[index].getCoordinateAtBin(l)- 30*insert_size && l<chrCopyNumber_[index].getExons_Countchr();l++ ) {
+    if (inputFormat == SAM_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
+        if (line_buffer[0] == '@')
+            return 0;
+        if (WESanalysis == true)  {
+            string chr1, chr2;
+            char orient1, orient2;
+            int left,right, insert_size;
+
+            if (getSAMinfo(line_buffer,chr1,chr2,orient1,orient2,left,right, insert_size)) {
+                char orient1_2_str[] = {orient1, orient2, 0};
+                char orient2_1_str[] = {orient2, orient1, 0};
+                MateOrientation orient1_2 = getMateOrientation(orient1_2_str);
+                MateOrientation orient2_1 = getMateOrientation(orient2_1_str);
+                if ((matesOrientation == orient1_2 && right-left>0) || (matesOrientation == orient2_1 && right-left<0)) {
+                    left = min(left, right);
+                    right  = left + abs(insert_size);
+                    int index = findIndex(chr1);
+                    if (index!=NA && chrCopyNumber_[index].getExons_Countchr() != 0) {
+                        bool leftIsInTheWindow = false;
+                        int l = 0;
+                       // try around this value first
+                        for (l=prevInd-1; l<=prevInd+30 && l<chrCopyNumber_[index].getExons_Countchr();l++ ) {
                             if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - insert_size)))) {
                                 leftIsInTheWindow = true;
                                 prevInd=l;
                                 break;
                             }
                         }
-                    }
-                    if (leftIsInTheWindow == false)   {
-                        valueToReturn = 0;
-                        return valueToReturn;
-                    }
-                    if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true))
-                        {
-                        step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + insert_size +1;
-                        chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
-                        valueToReturn = 1;
-                        step_ = 0;
-                        }
-                    if (right < chrCopyNumber_[index].getCoordinateAtBin(l))
-                        {
-                        valueToReturn = 0;
-                        return valueToReturn;
-                        }
-                    }
-                }
-            }
-        /*string chr1, chr2;
-        char orient1, orient2;
-        int left,right ;
-        string refname = "";
-        string samflag = "";
-        bool is_first = false;
-        int i = 0;
-        int read_Size = 0;
-        while (line_buffer[i] != '\t')
-                        {
-                        refname += line_buffer[i];
-                        i++;
-                        }
-                        i++;
-        while (line_buffer[i] != '\t')
-                        {
-                        samflag += line_buffer[i];
-                        i++;
-                        }
-                        i++;
-
-        for (int k = 0; k < 13; k++)
-            {
-            while (line_buffer[i] != '\t')
-                        {
-                        i++;
-                        }
-                        i++;
-            k++;
-            }
-
-        while (line_buffer[i] != '\t')
-                        {
-                        read_Size++;
-                        i++;
-                        }
-                        i++;
-
-        if (atoi(samflag.c_str()) & 0x0040)
-            is_first = true;
-
-        if (read_Size > longest_Read)
-            {
-            longest_Read = read_Size;
-            }
-        if (getSAMinfo(line_buffer,chr1,chr2,orient1,orient2,left,right))
-            {
-
-            if (!is_first)
-                {
-                 char* line_buffermate;
-                 FILE *stream2;
-                 char buffer[MAX_BUFFER];
-                 string command;
-                 command = pathToSamtools_ + " view "+mateFileName;
-                 stream2 = popen(command.c_str(), "r");
-                 string refname_mate = "";
-                 string linemate;
-                 string samflag_mate = "";
-                 bool found = false;
-                 while (((line_buffermate = getLine(buffer, MAX_BUFFER, stream2, linemate)) != NULL) &&  found == false)
-                    {
-                    int i = 0;
-                    refname_mate.clear();
-                    samflag_mate.clear();
-                    while (line_buffermate[i] != '\t')
-                        {
-                        refname_mate += line_buffermate[i];
-                        i++;
-                        }
-                        i++;
-                    while (line_buffermate[i] != '\t')
-                        {
-                        samflag_mate += line_buffermate[i];
-                        i++;
-                        }
-                        i++;
-                    for (int k = 0; k < 13; k++)
-                        {
-                        while (line_buffermate[i] != '\t')
-                            {
-                            i++;
-                            }
-                            i++;
-                            k++;
-                        }
-
-                    while (line_buffermate[i] != '\t')
-                        {
-                        read_Size++;
-                        i++;
-                        }
-                        i++;
-
-                    if (read_Size > longest_Read)
-                        {
-                        longest_Read = read_Size;
-                        }
-
-                    if (refname == refname_mate && samflag != samflag_mate)
-                        {
-                        found = true;
-                        }
-                    }
-                  if (found == true)
-                    {
-                    string chr1_mate, chr2_mate;
-                    char orient1_mate, orient2_mate;
-                    int left_mate,right_mate;
-                    if (getSAMinfo(line_buffermate,chr1_mate,chr2_mate,orient1_mate,orient2_mate,left_mate,right_mate))
-                        {
-                        vector <long> borders;
-                        borders.push_back(right);
-                        borders.push_back(left);
-                        borders.push_back(right_mate);
-                        borders.push_back(left_mate);
-                        right  = *max_element(borders.begin(), borders.end());
-                        left = *min_element(borders.begin(), borders.end());
-                        //cerr << "SECOND IN PAIR\n";
-                        //cerr  << left << "\t" << right << "\n";
-                        int index = findIndex(chr1);
-                        if (index!=NA)
-                            {
-                            int l = 0;
-                            bool leftIsInTheWindow = false;
-                            if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - longest_Read))))
-                                {
-                                leftIsInTheWindow = true;
-                                }
-                            else
-                                {
-                                while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - longest_Read))))  && (l <  chrCopyNumber_[index].getExons_Countchr()))
-                                    {
-                                    leftIsInTheWindow = false;
-                                    l++;
-                                    }
-                                if (l < chrCopyNumber_[index].getExons_Countchr())
-                                    {
+                        if (!leftIsInTheWindow) {
+                             //start from the beginning of the chromosome
+                            int maxpos=0;
+                            for (l=0; left>=chrCopyNumber_[index].getCoordinateAtBin(l)- 30*insert_size && l<chrCopyNumber_[index].getExons_Countchr();l++ ) {
+                                if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - insert_size)))) {
                                     leftIsInTheWindow = true;
-                                    }
-                                else if (l == (chrCopyNumber_[index].getExons_Countchr() - 1))
-                                    {
-                                    leftIsInTheWindow = false;
-                                    }
-                                }
-                            if (leftIsInTheWindow == false)
-                                {
-                                valueToReturn = 0;
-                                return valueToReturn;
-                                }
-                            if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true))
-                                {
-                                //cerr <<  chrCopyNumber_[index].getCoordinateAtBin(l) << "\t" << chrCopyNumber_[index].getEndAtBin(l) << "\n";
-                                step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + longest_Read +1;
-                                chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
-                                valueToReturn = 1;
-                                step_ = 0;
-                                }
-                            if (right < chrCopyNumber_[index].getCoordinateAtBin(l))
-                                {
-                                valueToReturn = 0;
-                                return valueToReturn;
+                                    prevInd=l;
+                                    break;
                                 }
                             }
                         }
-                    else
-                        {
-                        valueToReturn = 0;
-                        return valueToReturn;
+                        if (leftIsInTheWindow == false)   {
+                            valueToReturn = 0;
+                            return valueToReturn;
+                        }
+                        if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true))   {
+                            step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + insert_size +1;
+                            chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
+                            valueToReturn = 1;
+                            step_ = 0;
+                        }
+                        if (right < chrCopyNumber_[index].getCoordinateAtBin(l))  {
+                            valueToReturn = 0;
+                            return valueToReturn;
                         }
                     }
-                  else
-                    {
-                    valueToReturn = 0;
-                    return valueToReturn;
-                    }
                 }
-            else
-                {
+            }
+        } else  {
+            string chr1, chr2;
+            char orient1, orient2;
+            int left,right ;
+            if (getSAMinfo(line_buffer,chr1,chr2,orient1,orient2,left,right))  {
                 char orient1_2_str[] = {orient1, orient2, 0};
                 char orient2_1_str[] = {orient2, orient1, 0};
                 MateOrientation orient1_2 = getMateOrientation(orient1_2_str);
                 MateOrientation orient2_1 = getMateOrientation(orient2_1_str);
-
-                if ((matesOrientation == orient1_2 && right-left>0) || (matesOrientation == orient2_1 && right-left<0))
-                    {
-                    //cerr << "FIRST IN PAIR\n";
-                    if (left > right)
-                        {
-                        double tmp = left;
-                        left = right;
-                        right = tmp;
-                        }
-                    //cerr  << left << "\t" << right << "\n";
+                if ((matesOrientation == orient1_2 && right-left>=0) || (matesOrientation == orient2_1 && right-left<=0)) {
                     int index = findIndex(chr1);
-                    if (index!=NA)
-                        {
-                        int l = 0;
+                    if (index!=NA)  {
+                        chrCopyNumber_[index].mappedPlusOneAtI(min(left,right),step_);
+                        valueToReturn=1;
+                    }
+                }
+            }
+        }
+        return valueToReturn;
+    }
+
+    if (inputFormat == SAM_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM)  {
+
+        if (line_buffer[0] == '@')
+            return 0;
+
+        // EV: to be optimized
+        string chr1,chr2;
+        char* strs[32];
+        unsigned int strs_cnt = split((char*)line_buffer, '\t', strs);
+        if (strs_cnt > 3) {
+            if (WESanalysis == false) {
+                string chr = strs[2];
+                processChrName(chr);
+                if (chr.compare("*")!=0 ) {
+                    int left = atoi(strs[3]);
+                    int index = findIndex(chr);
+                    if (index!=NA) {
+                        chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+                        valueToReturn=1;
+                    }
+                }
+            } else {
+                string sequence = strs[9];
+                read_Size = sequence.size();
+                string chr = strs[2];
+                processChrName(chr);
+                int index = findIndex(chr);
+                //chr = "chr" + chr; //I do not understand why it was written here. Valentina
+                int l = 0;
+                if (chr.compare("*")!=0 ) {
+                    int left = atoi(strs[3]);
+                    if (index!=NA) {
+                        int right = left + read_Size;
                         bool leftIsInTheWindow = false;
-                        if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - longest_Read))))
-                            {
+                        if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))   {
                             leftIsInTheWindow = true;
-                            }
-                        else
+                        }   else   {
+                            while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))  && (l <  chrCopyNumber_[index].getExons_Countchr()))
                             {
-                            while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - longest_Read))))  && (l <  chrCopyNumber_[index].getExons_Countchr()))
-                                {
                                 leftIsInTheWindow = false;
                                 l++;
-                                }
-                            if (l < chrCopyNumber_[index].getExons_Countchr())
-                                {
-                                leftIsInTheWindow = true;
-                                }
-                            else if (l == (chrCopyNumber_[index].getExons_Countchr() - 1))
-                                {
-                                leftIsInTheWindow = false;
-                                }
                             }
-                        if (leftIsInTheWindow == false)
-                            {
+                            if (l < chrCopyNumber_[index].getExons_Countchr())  {
+                                leftIsInTheWindow = true;
+                            } else if (l == (chrCopyNumber_[index].getExons_Countchr() - 1)) {
+                                leftIsInTheWindow = false;
+                            }
+                        }
+                        if (leftIsInTheWindow == false) {
                             valueToReturn = 0;
                             return valueToReturn;
-                            }
-                        if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true))
-                            {
-                            //cerr <<  chrCopyNumber_[index].getCoordinateAtBin(l) << "\t" << chrCopyNumber_[index].getEndAtBin(l) << "\n";
-                            step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + longest_Read +1;
+                        }
+                        if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true)) {
+                            step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + read_Size +1;
                             chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
                             valueToReturn = 1;
                             step_ = 0;
-                            }
-                        if (right < chrCopyNumber_[index].getCoordinateAtBin(l))
-                            {
+                        }
+                        if (right < chrCopyNumber_[index].getCoordinateAtBin(l)) {
                             valueToReturn = 0;
                             return valueToReturn;
-                            }
                         }
-                    }
-            }
-        }*/
-     }
-    else
-        {
-        string chr1, chr2;
-        char orient1, orient2;
-        int left,right ;
-        if (getSAMinfo(line_buffer,chr1,chr2,orient1,orient2,left,right))
-            {
-            char orient1_2_str[] = {orient1, orient2, 0};
-            char orient2_1_str[] = {orient2, orient1, 0};
-            MateOrientation orient1_2 = getMateOrientation(orient1_2_str);
-            MateOrientation orient2_1 = getMateOrientation(orient2_1_str);
-            if ((matesOrientation == orient1_2 && right-left>=0) || (matesOrientation == orient2_1 && right-left<=0))
-                {
-                int index = findIndex(chr1);
-                if (index!=NA)
-                    {
-                    chrCopyNumber_[index].mappedPlusOneAtI(min(left,right),step_);
-                    valueToReturn=1;
                     }
                 }
             }
         }
-    return valueToReturn;
+        return valueToReturn;
     }
 
 
-  if (inputFormat == SAM_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM)  {
+    if (inputFormat == SAM_PILEUP_INPUT_FORMAT) {
+        if (line_buffer[0] == '#') return 0;
+        if (line_buffer[0] == '@') return 0;
 
-	if (line_buffer[0] == '@')
-	  return 0;
+        //chr1	10147	c	2	,.	`!
+        //chr1	10148	c	3	,$.^~,	b;9
+        //chr1	10149	c	2	.,	PI
+        //chr1	10150	c	2	.$,	H1
+        // we will simply count "^"
 
-	// EV: to be optimized
-	string chr1,chr2;
-	char* strs[32];
-	unsigned int strs_cnt = split((char*)line_buffer, '\t', strs);
-	if (strs_cnt > 3) {
-     if (WESanalysis == false)     {
-	  string chr = strs[2];
-	  processChrName(chr);
-	  if (chr.compare("*")!=0 ) {
-		int left = atoi(strs[3]);
-		int index = findIndex(chr);
-		if (index!=NA) {
+        char* strs[32];
+        unsigned int strs_cnt = split((char*)line_buffer, '\t', strs);
+        if (strs_cnt > 4) {
+            if (valueToReturn=strccnt(strs[4], '^')) {
+                string chr = strs[0];
+                processChrName(chr);
+                int left = atoi(strs[1]);
+                if (WESanalysis == false)   {
+                    int index = findIndex(chr);
+                    if (index==NA)
+                        valueToReturn=0;
+                    else {
+                        for (int i=0; i<valueToReturn; i++)    {
+                            chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+                        }
+                    }
+                } else {
+                    int l = 0;
+                    int index = findIndex(chr);
+                    if (index==NA)   {
+                        valueToReturn = 0;
+                        return valueToReturn;
+                    }
+                    bool leftIsInTheWindow = false;
+                    if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))   {
+                        leftIsInTheWindow = true;
+                    }  else    {
+                        while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) &&
+                            (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))  &&
+                            (l <  chrCopyNumber_[index].getExons_Countchr()))    {
+                            leftIsInTheWindow = false;
+                            l++;
+                        }   if (l < chrCopyNumber_[index].getExons_Countchr() -1 )    {
+                            leftIsInTheWindow = true;
+                        }
+                    }
+                    if (leftIsInTheWindow == false)  {
+                        valueToReturn = 0;
+                        return valueToReturn;
+                    }   else    {
+                        step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + read_Size +1;
+                        for (int i=0; i<valueToReturn; i++)    {
+                            chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
+                        }
+                        step_ = 0;
+                        return valueToReturn;
+                    }
+                }
+            }
+        }
+        return valueToReturn;
+    }
+
+    if (inputFormat == ELAND_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
+        string chr1, chr2, orient1, orient2;
+        int left, right,insertSize;
+
+        if (getELANDinfo(line_buffer,chr1,chr2,orient1,orient2,left,right,insertSize)) {
+          MateOrientation orient1_2 = getMateOrientation(orient1+orient2);
+          MateOrientation orient2_1 = getMateOrientation(orient2+orient1);
+          if ((matesOrientation == orient1_2 && insertSize>0) || (matesOrientation == orient1_2 && insertSize<0)) {
+            // EV: warning orient2_1 not used: port "as is" from 5.9 version, bug ?
+            int ind = findIndex(chr1);
+            if (ind!=NA) {
+              chrCopyNumber_[ind].mappedPlusOneAtI(min(left,right), step_);
+              valueToReturn= 1;
+            }
+          }
+        }
+        return valueToReturn;
+    }
+
+    if (inputFormat == BOWTIE_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
+        std::vector<std::string> strs = split(line_buffer, '\t');
+        if (strs.size() > 4) {
+          string chr = strs[2];
+          processChrName(chr);
+          int index = findIndex(chr);
+          if (index!=NA) {
+            int left = atoi(strs[3].c_str());
+            chrCopyNumber_[index].mappedPlusOneAtI(left, step_);
+            valueToReturn= 1;
+          }
+        }
+        strs.clear();
+        return valueToReturn;
+    }
+
+    if (inputFormat == PSL_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
+        std::vector<std::string> strs = split(line_buffer, '\t');
+        if (strs.size() > 17) {
+          string chr = strs[13];
+          processChrName(chr);
+          int index = findIndex(chr);
+          if (index!=NA) {
+            int left = atoi(strs[15].c_str());
             chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-            valueToReturn=1;
-         }
+            valueToReturn= 1;
+          }
         }
-       } else {
-        string sequence = strs[9];
-        read_Size = sequence.size();
-        string chr = strs[2];
-        processChrName(chr);
-        int index = findIndex(chr);
-        chr = "chr" + chr;
-        int l = 0;
-        if (chr.compare("*")!=0 ) {
-            int left = atoi(strs[3]);
-            if (index!=NA) {
-                int right = left + read_Size;
-                bool leftIsInTheWindow = false;
-                if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))
-                    {
-                        leftIsInTheWindow = true;
-                    }
-                else
-                    {
-                    while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))  && (l <  chrCopyNumber_[index].getExons_Countchr()))
-                        {
-                        leftIsInTheWindow = false;
-                        l++;
-                        }
-                    if (l < chrCopyNumber_[index].getExons_Countchr())
-                        {
-                        leftIsInTheWindow = true;
-                        }
-                    else if (l == (chrCopyNumber_[index].getExons_Countchr() - 1))
-                        {
-                        leftIsInTheWindow = false;
-                        }
-                    }
-                if (leftIsInTheWindow == false)
-                    {
-                    valueToReturn = 0;
-                    return valueToReturn;
-                    }
-                if ((right >  chrCopyNumber_[index].getCoordinateAtBin(l)) && (leftIsInTheWindow == true))
-                    {
-                    step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + read_Size +1;
-                    chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
-                    valueToReturn = 1;
-                    step_ = 0;
-                    }
-                if (right < chrCopyNumber_[index].getCoordinateAtBin(l))
-                    {
-                    valueToReturn = 0;
-                    return valueToReturn;
-                    }
-        }
+        strs.clear();
+        return valueToReturn;
     }
-   }
-   }
-  return valueToReturn;
-  }
 
-
-  if (inputFormat == ELAND_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
-	string chr1, chr2, orient1, orient2;
-	int left, right,insertSize;
-
-	if (getELANDinfo(line_buffer,chr1,chr2,orient1,orient2,left,right,insertSize)) {
-	  MateOrientation orient1_2 = getMateOrientation(orient1+orient2);
-	  MateOrientation orient2_1 = getMateOrientation(orient2+orient1);
-	  if ((matesOrientation == orient1_2 && insertSize>0) || (matesOrientation == orient1_2 && insertSize<0)) {
-		// EV: warning orient2_1 not used: port "as is" from 5.9 version, bug ?
-		int ind = findIndex(chr1);
-		if (ind!=NA) {
-		  chrCopyNumber_[ind].mappedPlusOneAtI(min(left,right), step_);
-		  valueToReturn= 1;
-		}
-	  }
-	}
-	return valueToReturn;
-  }
-
-  if (inputFormat == BOWTIE_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
-	std::vector<std::string> strs = split(line_buffer, '\t');
-	if (strs.size() > 4) {
-	  string chr = strs[2];
-	  processChrName(chr);
-	  int index = findIndex(chr);
-	  if (index!=NA) {
-		int left = atoi(strs[3].c_str());
-		chrCopyNumber_[index].mappedPlusOneAtI(left, step_);
-		valueToReturn= 1;
-	  }
-	}
-	strs.clear();
-	return valueToReturn;
-  }
-
-  if (inputFormat == PSL_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
-	std::vector<std::string> strs = split(line_buffer, '\t');
-	if (strs.size() > 17) {
-	  string chr = strs[13];
-	  processChrName(chr);
-	  int index = findIndex(chr);
-	  if (index!=NA) {
-		int left = atoi(strs[15].c_str());
-		chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-		valueToReturn= 1;
-	  }
-	}
-	strs.clear();
-	return valueToReturn;
-
-  }
-
-  if (inputFormat == ARACHNE_BED_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
-	std::vector<std::string> strs = split(line_buffer, '\t');
-	if (strs.size() > 1) {
-	  string chr = strs[0];
-	  processChrName(chr);
-	  int index = findIndex(chr);
-	  if (index!=NA){
-		int left = atoi(strs[1].c_str());
-		chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-		valueToReturn= 1;
-	  }
-	} else {
-	  strs.clear();
-	  strs = split(line_buffer, ' ');
-	  if (strs.size() > 1) {
-		string chr = strs[0];
-		processChrName(chr);
-		int index = findIndex(chr);
-		if (index!=NA) {
-		  int left = atoi(strs[1].c_str());
-		  chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-		  valueToReturn= 1;
-		}
-	  }
-	}
-	strs.clear();
-	return valueToReturn;
-  }
-
-  if (inputFormat == SOAP_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
-	std::vector<std::string> strs = split(line_buffer, '\t');
-	if (strs.size() > 8) {
-	  string chr = strs[7];
-	  processChrName(chr);
-	  int index = findIndex(chr);
-	  if (index!=NA) {
-		int left = atoi(strs[8].c_str());
-		chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-		valueToReturn= 1;
-	  }
-	}
-	strs.clear();
-	return valueToReturn;
-  }
-
-  if (inputFormat == SOAP_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
-	std::vector<std::string> strs = split(line_buffer, '\t');
-	if (strs.size() > 8) {
-	  string chr = strs[7];
-	  processChrName(chr);
-	  int index = findIndex(chr);
-	  if (index!=NA) {
-		int left = atoi(strs[8].c_str());
-		chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-		valueToReturn= 1;
-	  }
-	}
-	strs.clear();
-	return valueToReturn;
-  }
-
-  if (inputFormat == SAM_PILEUP_INPUT_FORMAT) {
-	if (line_buffer[0] == '#') return 0;
-	if (line_buffer[0] == '@') return 0;
-
-//chr1	10147	c	2	,.	`!
-//chr1	10148	c	3	,$.^~,	b;9
-//chr1	10149	c	2	.,	PI
-//chr1	10150	c	2	.$,	H1
-// we will simply count "^"
-
-	char* strs[32];
-	unsigned int strs_cnt = split((char*)line_buffer, '\t', strs);
-	if (strs_cnt > 4) {
-	  if (valueToReturn=strccnt(strs[4], '^')) {
- 		string chr = strs[0];
-		processChrName(chr);
-		int left = atoi(strs[1]);
-		if (WESanalysis == false)   {
-            int index = findIndex(chr);
-            if (index==NA)
-                valueToReturn=0;
-            else {
-                for (int i=0; i<valueToReturn; i++)    {
-                    chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
-                }
-            }
+    if (inputFormat == ARACHNE_BED_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
+        std::vector<std::string> strs = split(line_buffer, '\t');
+        if (strs.size() > 1) {
+          string chr = strs[0];
+          processChrName(chr);
+          int index = findIndex(chr);
+          if (index!=NA){
+            int left = atoi(strs[1].c_str());
+            chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+            valueToReturn= 1;
+          }
         } else {
-            int l = 0;
+          strs.clear();
+          strs = split(line_buffer, ' ');
+          if (strs.size() > 1) {
+            string chr = strs[0];
+            processChrName(chr);
             int index = findIndex(chr);
-            if (index==NA)   {
-                valueToReturn = 0;
-                return valueToReturn;
+            if (index!=NA) {
+              int left = atoi(strs[1].c_str());
+              chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+              valueToReturn= 1;
             }
-            bool leftIsInTheWindow = false;
-            if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))   {
-                leftIsInTheWindow = true;
-            }  else    {
-                while ((!((left - 1 < chrCopyNumber_[index].getEndAtBin(l)) &&
-                    (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - read_Size))))  &&
-                    (l <  chrCopyNumber_[index].getExons_Countchr()))    {
-                    leftIsInTheWindow = false;
-                    l++;
-                }   if (l < chrCopyNumber_[index].getExons_Countchr() -1 )    {
-                    leftIsInTheWindow = true;
-                }
-            }
-            if (leftIsInTheWindow == false)  {
-                valueToReturn = 0;
-                return valueToReturn;
-            }   else    {
-                step_ = chrCopyNumber_[index].getEndAtBin(l) - chrCopyNumber_[index].getCoordinateAtBin(l) + read_Size +1;
-                for (int i=0; i<valueToReturn; i++)    {
-                    chrCopyNumber_[index].mappedPlusOneAtI(left,step_, l);
-                }
-                return valueToReturn;
-                step_ = 0;
-            }
+          }
         }
-      }
-	}
-	return valueToReturn;
-  }
+        strs.clear();
+        return valueToReturn;
+    }
 
-  cerr << "Format of the input file ( "<<inputFormat<<" )was not recognized..\n";
-  exit (-1);
+    if (inputFormat == SOAP_INPUT_FORMAT && matesOrientation == SINGLE_END_SORTED_SAM) {
+        std::vector<std::string> strs = split(line_buffer, '\t');
+        if (strs.size() > 8) {
+          string chr = strs[7];
+          processChrName(chr);
+          int index = findIndex(chr);
+          if (index!=NA) {
+            int left = atoi(strs[8].c_str());
+            chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+            valueToReturn= 1;
+          }
+        }
+        strs.clear();
+        return valueToReturn;
+    }
+
+    if (inputFormat == SOAP_INPUT_FORMAT && matesOrientation != SINGLE_END_SORTED_SAM) {
+        std::vector<std::string> strs = split(line_buffer, '\t');
+        if (strs.size() > 8) {
+          string chr = strs[7];
+          processChrName(chr);
+          int index = findIndex(chr);
+          if (index!=NA) {
+            int left = atoi(strs[8].c_str());
+            chrCopyNumber_[index].mappedPlusOneAtI(left,step_);
+            valueToReturn= 1;
+          }
+        }
+        strs.clear();
+        return valueToReturn;
+    }
+
+    cerr << "Format of the input file ( "<<inputFormat<<" )was not recognized..\n";
+    exit (-1);
 
 }
 
