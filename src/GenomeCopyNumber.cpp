@@ -320,7 +320,7 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
 
 		inputFormat = getInputFormat(myInputFormat);
         stream =
-#if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+#if defined(_WIN32)
 		  _popen(command.c_str(), "r");
 #else
 		popen(command.c_str(), "r");
@@ -330,7 +330,7 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
 		  count++;
 		  normalCount+=processRead(inputFormat,matesOrientation,line_buffer, bin,targetBed, mateFileName);
 		}
-        #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+        #if defined(_WIN32)
 				_pclose(stream);
 		#else
 				pclose(stream);
