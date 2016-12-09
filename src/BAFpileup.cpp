@@ -72,10 +72,6 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
         }
         fileMates.close();
 
-        #ifdef PROFILE_TRACE
-            time_t t0 = time(NULL);
-        #endif
-
        // MateOrientation matesOrientation = getMateOrientation(matesOrientation_str); // will not consider read orientation to increase speed
         char* line_buffer;
         FILE *stream;
@@ -97,6 +93,7 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
             if (mateFileName.substr(mateFileName.size()-3,3).compare(".gz")==0) {
                           command = "gzip -c -d "+mateFileName;
             }
+
             stream =
             #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
                 _popen(command.c_str(), "r");
@@ -143,6 +140,7 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
         fragmentLength = fragmentLength/j;
         float flanks = fragmentLength/2;
         if (zgOrbam) {
+
             #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
 				_pclose(stream);
             #else
@@ -247,8 +245,6 @@ std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::st
     if (makeminipileup.substr(makeminipileup.size()-3,3).compare("vcf")==0) {
         intersected = outputDir + "_SNPinNewCaptureRegions.vcf";
     }
-
-    string command = pathToBedtools_ +" intersect -a " + makeminipileup + " -b " + bedFileWithRegionsOfInterest + " > " + intersected;
 
     stream =
     #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))

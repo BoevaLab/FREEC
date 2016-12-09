@@ -51,7 +51,7 @@ unsigned int split(char* str_ori, char delim, char* elems[])
   unsigned int jj = 0;
   unsigned int elem_cnt = 0;
   char c;
-  for (; c = *str++; ++jj) {
+  for (; (c = *str++); ++jj) {
 	if (c == delim) {
 	  str_ori[jj] = 0;
 	  elems[elem_cnt++] = &str_ori[last_jj];
@@ -367,7 +367,7 @@ long getReadNumberFromPileup(std::string const& fileName) {
             strs = split(line, '\t');
             if (strs.size() > 4) {
                 int toadd;
-                if (toadd=strccnt(strs[4].c_str(), '^')) {
+                if ((toadd = strccnt(strs[4].c_str(), '^'))) {
                         count += toadd;
                 }
             }
@@ -390,7 +390,7 @@ long getReadNumberFromPileup(std::string const& fileName) {
             strs = split(line, '\t');
             if (strs.size() > 4) {
                 int toadd;
-                if (toadd=strccnt(strs[4].c_str(), '^')) {
+                if ((toadd = strccnt(strs[4].c_str(), '^'))) {
                         count += toadd;
                 }
             }

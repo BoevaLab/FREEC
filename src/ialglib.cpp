@@ -9,8 +9,6 @@ optimized ALGLIB subroutines.
 static const int alglib_simd_alignment = 16;
 static const int alglib_r_block        = 32;
 static const int alglib_c_block        = 24;
-static const int alglib_half_r_block   = alglib_r_block/2;
-static const int alglib_half_c_block   = alglib_c_block/2;
 static const int alglib_twice_r_block  = alglib_r_block*2;
 static const int alglib_twice_c_block  = alglib_c_block*2;
 //#define ABLAS_PREFETCH(x) _mm_prefetch((const char*)(x),_MM_HINT_T0)
@@ -402,7 +400,7 @@ This subroutine copies unaligned complex vector
 1. strideb is stride measured in complex numbers, not doubles
 2. conj may be "N" (no conj.) or "C" (conj.)
 ********************************************************************/
-void ialglib::vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, char *conj)
+void ialglib::vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, const char *conj)
 {
     int i;
 
@@ -434,7 +432,7 @@ This subroutine copies unaligned complex vector (passed as double*)
 1. strideb is stride measured in complex numbers, not doubles
 2. conj may be "N" (no conj.) or "C" (conj.)
 ********************************************************************/
-void ialglib::vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, char *conj)
+void ialglib::vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, const char *conj)
 {
     int i;
 
