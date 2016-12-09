@@ -28,7 +28,7 @@ SNPposition::SNPposition(int position, char* alt) //for a VCF line
         nucleotide_ = alt[0];
     }  else  {
         char* strs[4];
-        unsigned strs_cnt = split(alt, ',', strs);
+        split(alt, ',', strs);
         nucleotide_ = strs[0][0];
     }
     freq_ = 0; // EV: must be initialized
@@ -45,7 +45,7 @@ SNPposition::SNPposition(int position, char* letters, const char* strand, const 
     if (strlen(letters) == 1)    { //should not get here
         nucleotide_ = letters[0];
     }   else    {
-        unsigned strs_cnt = split(letters, '/', strs);
+        split(letters, '/', strs);
         char c_ref;
         if (reverse) {
             c_ref = complement(ref[0]);

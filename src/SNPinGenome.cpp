@@ -269,7 +269,7 @@ long SNPinGenome::processPileUPLine(int & positionCount, char* line, string & ol
                 processChrName(chr);
                 int lindex = p_genomeCopyNumber->findIndex(chr);
                 if (lindex != NA) {
-                    if (valueToReturn = strccnt(strs[4], '^')) {
+                    if ((valueToReturn = strccnt(strs[4], '^'))) {
                         ChrCopyNumber& chrCopyNumber = p_genomeCopyNumber->getChrCopyNumberAt(lindex);
                         int step = p_genomeCopyNumber->getStep();
                         for (int i=0; i<valueToReturn; i++)
@@ -283,7 +283,7 @@ long SNPinGenome::processPileUPLine(int & positionCount, char* line, string & ol
                  processChrName(chr);
                 int lindex = p_genomeCopyNumber->findIndex(chr);
                 if (lindex != NA) {
-                    if (valueToReturn = strccnt(strs[4], '^')) {
+                    if ((valueToReturn = strccnt(strs[4], '^'))) {
                         ChrCopyNumber& chrCopyNumber = p_genomeCopyNumber->getChrCopyNumberAt(lindex);
                         int l = 0;
                         bool leftIsInTheWindow = false;
@@ -312,7 +312,7 @@ long SNPinGenome::processPileUPLine(int & positionCount, char* line, string & ol
 
     if (currentPosition==sNPpositionToProceed) {
         try {
-            float localBAF=addInfoFromAPileUp(atoi(strs[3]),minimalTotalLetterCountPerPosition,(*SNP_atChr_)[index].getNucleotideAt(positionCount),
+            addInfoFromAPileUp(atoi(strs[3]),minimalTotalLetterCountPerPosition,(*SNP_atChr_)[index].getNucleotideAt(positionCount),
                                            index,positionCount,sNPpositionToProceed,strs[4], minimalQualityPerPosition,strs[5]);
 //                    if (localBAF>=0) {
 //                        heterozygousBAFs.push_back(localBAF);
@@ -333,8 +333,8 @@ long SNPinGenome::processPileUPLine(int & positionCount, char* line, string & ol
                     sNPpositionToProceed=NA;
         }
         if (currentPosition==sNPpositionToProceed) {
-                 try {
-                    float localBAF=addInfoFromAPileUp(atoi(strs[3]),minimalTotalLetterCountPerPosition,(*SNP_atChr_)[index].getNucleotideAt(positionCount),
+                try {
+                    addInfoFromAPileUp(atoi(strs[3]),minimalTotalLetterCountPerPosition,(*SNP_atChr_)[index].getNucleotideAt(positionCount),
                                            index,positionCount,sNPpositionToProceed,strs[4], minimalQualityPerPosition,strs[5]);
 //                        if (localBAF>=0) {
 //                            heterozygousBAFs.push_back(localBAF);

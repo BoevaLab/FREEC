@@ -19,8 +19,8 @@ void mv_complex_generic(int m, int n, const double *a, const double *x, ap::comp
 void vzero(int n, double *p, int stride);
 void vzero_complex(int n, ap::complex *p, int stride);
 void vcopy(int n, const double *a, int stridea, double *b, int strideb);
-void vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, char *conj);
-void vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, char *conj);
+void vcopy_complex(int n, const ap::complex *a, int stridea, double *b, int strideb, const char *conj);
+void vcopy_complex(int n, const double *a, int stridea, double *b, int strideb, const char *conj);
 void mcopyblock(int m, int n, const double *a, int op, int stride, double *b);
 void mcopyunblock(int m, int n, const double *a, int op, double *b, int stride);
 void mcopyblock_complex(int m, int n, const ap::complex *a, int op, int stride, double *b);
