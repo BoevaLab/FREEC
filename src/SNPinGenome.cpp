@@ -55,7 +55,7 @@ int SNPinGenome::processSNPLine(bool isVCF, char * line, string & myChr, int & i
         int position = atoi(strs[1]);
         if (position!=previousPos) {
             previousPos = position;
-            if (SNP_atChr_->size()>index) {
+            if (int(SNP_atChr_->size())>index) {
                 if (!isVCF) {
                     if (strlen(strs[4])==1) {
                         (*SNP_atChr_)[index].push_SNP(SNPposition(position,strs[2],strs[3],strs[4]));
@@ -101,7 +101,6 @@ void SNPinGenome::readSNPs(std::string const& inFile)
 #ifdef PROFILE_TRACE
 	time_t t0 = time(NULL);
 #endif
-
 
 	/*if (makingpileup != true)*/
 	{

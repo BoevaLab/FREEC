@@ -169,16 +169,14 @@ int main(int argc, char *argv[])
 
     string pathToSambamba = (std::string)cf.Value("general","sambamba","");
     string SambambaThreads = "";
-    if (pathToSambamba != "")
-        {
+    if (pathToSambamba != "")    {
         SambambaThreads = (std::string)cf.Value("general","SambambaThreads","");
-        if (SambambaThreads == "")
-            {
-                SambambaThreads=(std::string)cf.Value("general", "maxThreads", 1);
-                cerr << "Warning: the number of thread to use with Sambamba (option \"SambambaThreads\" in [general] has been set to " <<SambambaThreads<<endl;
-                cerr << "..in the config file, you can set SambambaThreads = 2 to use 2 threads";
-            }
+        if (SambambaThreads == "")       {
+            SambambaThreads=(std::string)cf.Value("general", "maxThreads", 1);
+            cerr << "Warning: the number of thread to use with Sambamba (option \"SambambaThreads\" in [general] has been set to " <<SambambaThreads<<endl;
+            cerr << "..in the config file, you can set SambambaThreads = 2 to use 2 threads";
         }
+    }
 
 	bool has_window = cf.hasValue("general","window");
     int window = (int)cf.Value("general","window",NA);
@@ -542,19 +540,19 @@ int main(int argc, char *argv[])
     std::string tryOtherPloidy = (std::string)cf.Value("general", "ploidy", "2,3,4");
     std::vector <int> ploidies;
     int ploidy;
-    bool isPloidyKnown = false;
+   // bool isPloidyKnown = false;
     std::vector<std::string> strs;
     split(tryOtherPloidy, ',', strs);
     if (strs.size()>1) {
         cout << "..FREEC will try to guess the correct ploidy (for each ploidy specified in 'ploidy' parameter)\n..It will try ploidies: ";
-        for (int i = 0; i < strs.size(); i++)   {
+        for (unsigned int i = 0; i < strs.size(); i++)   {
             ploidies.push_back(atoi(strs[i].c_str()));
             cout << ploidies.back()<<endl;
         }
         ploidy=ploidies[1];
     }else {
         ploidy=round_f(float(atof(tryOtherPloidy.c_str())));
-        isPloidyKnown=true;
+    //    isPloidyKnown=true;
         ploidies.push_back(ploidy);
         cout << "..average ploidy set to "<<ploidy<<"\n";
     }
@@ -583,7 +581,7 @@ int main(int argc, char *argv[])
     }
 
     float seekSubclones = (float)cf.Value("general","minimalSubclonePresence", 100);
-    if (seekSubclones==0  ||seekSubclones==1) {seekSubclones==100;}
+    if (seekSubclones==0  ||seekSubclones==1) {seekSubclones=100;}
     if (seekSubclones>0  && seekSubclones<1) {seekSubclones*=100;}
     if (seekSubclones>0 &&seekSubclones<100)
         cout << "..Control-FREEC will look for subclones present in at least "<<seekSubclones<<"% of cell population\n";
@@ -917,7 +915,7 @@ int main(int argc, char *argv[])
         controlCopyNumber.setSeekSubclones(true); //CARINO, WHY DO YOU NEED TO SET IT FOR THE CONTROL?
 
 
-    for (int i=0;i < ploidies.size(); i++ ) {
+    for (unsigned int i=0;i < ploidies.size(); i++ ) {
         ploidy = ploidies[i];
         cout << "..Running FREEC with ploidy set to " << ploidy << "\n";
 
@@ -930,7 +928,7 @@ int main(int argc, char *argv[])
 
     cout << "Ploidy" << "\t" << "RSS score" << "\t" << "Percentage of Genome Explained";
     if (contaminationAdjustment == true)        { cout << "\tContamination" << "\n";  }       else        {    cout << "\n"; }
-    for (int i=0;i < ploidies.size(); i++ ) {
+    for (unsigned int i=0;i < ploidies.size(); i++ ) {
         cout <<ploidies[i]<<"\t"<<RSS[i]<<"\t"<<percentage_GenExpl[i];
         if (contaminationAdjustment == true)  { cout << "\t"<< contamination[i] << "\n"; }
         else   {  cout << "\n"; }
@@ -1037,7 +1035,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
 
 
         if (isControlIsPresent) {
-            if ((!forceGC && !(has_BAF) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0))) { //normalize sample density with control density
+            if (((!forceGC) && (!has_BAF)) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0)) { //normalize sample density with control density
                 sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
             } else { //forceGC != 0
                 if (forceGC==1) { //normalize first Sample and Control, and then calculate the ratio
@@ -1145,7 +1143,7 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
             sampleCopyNumber.calculateCopyNumberProbs_and_exomeLength(breakPointType);
             }
 
-        float contamValue;
+        float contamValue = 0;
         if (contaminationAdjustment && knownContamination==0) {
             cout <<"..Evaluating possible contamination..\n";
             cout << std::flush;

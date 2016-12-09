@@ -1018,7 +1018,7 @@ double GenomeCopyNumber::calculateMedianAround (GenomeCopyNumber & controlCopyNu
 		if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
 			vector <float> controlcounts = controlCopyNumber.getChrCopyNumber(it->getChromosome()).getValues() ;
             //check that everything is all right:
-            if (controlcounts.size()!=it->getLength()) {
+            if (int(controlcounts.size())!=it->getLength()) {
                 cerr << "Possible Error: calculateMedianAround ()\n";
             }
 			for (int i = 0; i< it->getLength(); i++) {
@@ -1140,7 +1140,7 @@ void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int
             if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
                 vector <float> controlcounts = controlCopyNumber.getChrCopyNumber(it->getChromosome()).getValues() ;
                 //check that everything is all right:
-                if (controlcounts.size()!=it->getLength()) {
+                if (int(controlcounts.size())!=it->getLength()) {
                     cerr << "Possible Error: calculateMedianAround ()\n";
                 }
                 for (int i = 0; i< it->getLength(); i++) {
@@ -1351,7 +1351,7 @@ void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int
             if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
                 vector <float> controlcounts = controlCopyNumber.getChrCopyNumber(it->getChromosome()).getValues() ;
                 //check that everything is all right:
-                if (controlcounts.size()!=it->getLength()) {
+                if (int(controlcounts.size())!=it->getLength()) {
                     cerr << "Possible Error: calculateMedianAround ()\n";
                 }
                 for (int i = 0; i< it->getLength(); i++) {
@@ -3234,7 +3234,6 @@ float GenomeCopyNumber::evaluateContamination () {
 }
 
 float GenomeCopyNumber::evaluateContaminationwithLR () {
-	float contam = 0;
 	string::size_type pos = 0;
 	vector <float> observed_values;
     vector <float> expected_values;
@@ -3269,106 +3268,27 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
 		}
 	}
 
-
-	/*ofstream myfile2;
-    std::string Newfile2 = "/data/tmp/cgurjao/Observed_expected(w-o_noise)_0.05.txt";
-    myfile2.open(Newfile2.c_str());
-    myfile2 << "Observed" << "\t" << "Expected" <<  "\n";
-	int i = 0;
-    vector <float> unique_exp_values;
-    unique_exp_values.push_back(expected_values[0]);
-	while (i < expected_values.size())
-        {
-        int j = 0;
-        while (j < unique_exp_values.size())
-            {
-            if (expected_values[i] == unique_exp_values[j])
-                {
-                j = 3*unique_exp_values.size();
-                }
-            j++;
-            if (j == unique_exp_values.size())
-                {
-                unique_exp_values.push_back(expected_values[i]);
-                }
-            }
-        i++;
-        }
-
-    i = 0;*/
     vector <float> x = expected_values;
     vector <float> y = observed_values;
-    /*sort(unique_exp_values.begin(), unique_exp_values.end());
-    unique_exp_values.pop_back();
-    unique_exp_values.pop_back();
-    while (i < unique_exp_values.size())
-        {
-        vector <float> observedtmp;
-        for (int j = 0; j < expected_values.size(); j++)
-            {
-            if (expected_values[j] == unique_exp_values[i])
-                {
-                observedtmp.push_back(observed_values[j]);
-                }
-            }
-        vector <float> quart_ = get_quartiles(observedtmp);
-        for (int k = 0; k < observedtmp.size(); k++)
-           {
-            if (observedtmp[k] > quart_[0] && observedtmp[k] < quart_[2])
-                {
-                if ((observedtmp[k] != -1) && (unique_exp_values[i] != -1))
-                 if  ((observedtmp[k] != observedtmp [k-1]))
-                    {
-                    x.push_back(unique_exp_values[i]);
-                    y.push_back(get_mean(observedtmp));
-                    }
-                }
-           }
-        i++;
-        observedtmp.clear();
-        }*/
 
+    int n = x.size();
+    float sum_x = 0;
+    float sum_y = 0;
+    float sum_x2 = 0;
+    float sum_y2 = 0;
+    float sum_xy = 0;
+    for (int i = 0; i < n; i++)     {
+        sum_x += x[i];
+        sum_y += y[i];
+        sum_x2 += x[i] * x[i];
+        sum_y2 += y[i] * y[i];
+        sum_xy += x[i] * y[i];
+    }
 
-        /*vector <float> x_tmp;
-        vector <float> y_tmp;
-        x_tmp.push_back(x[0]);
-        y_tmp.push_back(y[0]);
-        myfile2 << x[0] << "\t" << y[0] << "\n";
-        int tmp = 0;
-        for (int k = 0; k < x.size(); k++)
-            {
-            if (x_tmp[tmp] != x[k])
-                {
-                x_tmp.push_back(x[k]);
-                y_tmp.push_back(y[k]);
-                tmp++;
-                myfile2 << x[k] << "\t" << y[k] << "\n";
-                }
-            }
-        x.clear();
-        x = x_tmp;
-        y.clear();
-        y= y_tmp;*/
-
-        int n = x.size();
-        float sum_x = 0;
-        float sum_y = 0;
-        float sum_x2 = 0;
-        float sum_y2 = 0;
-        float sum_xy = 0;
-        for (int i = 0; i < n; i++)
-            {
-            sum_x += x[i];
-            sum_y += y[i];
-            sum_x2 += x[i] * x[i];
-            sum_y2 += y[i] * y[i];
-            sum_xy += x[i] * y[i];
-            }
-
-        float a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x); //CARINO
-         a =sum_xy/sum_x2; //VALENTINA
+    float a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x); //CARINO
+    a =sum_xy/sum_x2; //VALENTINA
       //  float b = (sum_x2 * sum_y - sum_x * sum_xy) / (n * sum_x2 - sum_x * sum_x);
-        float contam_a =  (1-a)/(1-a+2*a/(float)ploidy_);
+    float contam_a =  (1-a)/(1-a+2*a/(float)ploidy_);
       //  float contam_b = -b/(-b+(2*b/ploidy_)-(2/ploidy_));
         /*cerr << a << "\t" << b  << "\n";
         cerr << contam_a << "\t" << contam_b;*/
@@ -3655,7 +3575,7 @@ int GenomeCopyNumber::processRead(std::string const& inputFormat, std::string co
 int GenomeCopyNumber::processRead(InputFormat inputFormat, MateOrientation matesOrientation, const char* line_buffer, int & prevInd,std::string targetBed, std::string mateFileName)
 {
 
-    int read_Size =100; // in case it is not initialized (e.g. for Pileup files)
+    int read_Size =150; // in case it is not initialized (e.g. for Pileup files)
 
     if (!*line_buffer) {
         return 0;
@@ -3693,7 +3613,6 @@ int GenomeCopyNumber::processRead(InputFormat inputFormat, MateOrientation mates
                         }
                         if (!leftIsInTheWindow) {
                              //start from the beginning of the chromosome
-                            int maxpos=0;
                             for (l=0; left>=chrCopyNumber_[index].getCoordinateAtBin(l)- 30*insert_size && l<chrCopyNumber_[index].getExons_Countchr();l++ ) {
                                 if ((left - 1 < chrCopyNumber_[index].getEndAtBin(l) && (left > (chrCopyNumber_[index].getCoordinateAtBin(l) - insert_size)))) {
                                     leftIsInTheWindow = true;
@@ -3823,8 +3742,9 @@ int GenomeCopyNumber::processRead(InputFormat inputFormat, MateOrientation mates
         char* strs[32];
         unsigned int strs_cnt = split((char*)line_buffer, '\t', strs);
         if (strs_cnt > 4) {
-            if (valueToReturn=strccnt(strs[4], '^')) {
-                string chr = strs[0];
+            valueToReturn=strccnt(strs[4], '^');
+            if (valueToReturn) {
+                string chr = string(strs[0]);
                 processChrName(chr);
                 int left = atoi(strs[1]);
                 if (WESanalysis == false)   {
@@ -3880,8 +3800,8 @@ int GenomeCopyNumber::processRead(InputFormat inputFormat, MateOrientation mates
         if (getELANDinfo(line_buffer,chr1,chr2,orient1,orient2,left,right,insertSize)) {
           MateOrientation orient1_2 = getMateOrientation(orient1+orient2);
           MateOrientation orient2_1 = getMateOrientation(orient2+orient1);
-          if ((matesOrientation == orient1_2 && insertSize>0) || (matesOrientation == orient1_2 && insertSize<0)) {
-            // EV: warning orient2_1 not used: port "as is" from 5.9 version, bug ?
+          if ((matesOrientation == orient1_2 && insertSize>0) || (matesOrientation == orient2_1 && insertSize<0)) {
+            // EV: warning orient2_1 not used: port "as is" from 5.9 version, bug ? - it was a bug! Valentina
             int ind = findIndex(chr1);
             if (ind!=NA) {
               chrCopyNumber_[ind].mappedPlusOneAtI(min(left,right), step_);
@@ -4101,7 +4021,7 @@ int GenomeCopyNumber::focusOnCapture (std::string const& captureFile) {
             int rightWindow = positionE/step_ + endShift;
             if (rightWindow<leftWindow)
                 rightWindow=leftWindow;
-            int RegLength = positionE - positionS;
+            unsigned long int RegLength = positionE - positionS;
             if (RegLength<minRegion)
                 minRegion=RegLength;
             refGenomeSize_ += RegLength;
@@ -4199,8 +4119,6 @@ double GenomeCopyNumber::Percentage_GenomeExplained(int & unexplainedChromosomes
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
 		if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
 			int fragmentLength=0;
-			int startFragment = 0;
-			int endFragment=0;
 			if (unexplained)unexplainedChromosomes++;
             unexplained=0;
             for (int i = 0; i< it->getNumberOfFragments(); i++) { // for each fragment:

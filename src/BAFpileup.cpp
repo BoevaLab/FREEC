@@ -1,3 +1,24 @@
+/*************************************************************************
+Copyright (c) 2010-2016, Valentina BOEVA.
+
+>>> SOURCE LICENSE >>>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation (www.fsf.org); either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available at
+http://www.fsf.org/licensing/licenses
+
+>>> END OF LICENSE >>>
+*************************************************************************/
+
+
 #include "BAFpileup.h"
 
 using namespace std;
@@ -55,7 +76,7 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
             time_t t0 = time(NULL);
         #endif
 
-        MateOrientation matesOrientation = getMateOrientation(matesOrientation_str);
+       // MateOrientation matesOrientation = getMateOrientation(matesOrientation_str); // will not consider read orientation to increase speed
         char* line_buffer;
         FILE *stream;
         char buffer[MAX_BUFFER];
@@ -117,8 +138,6 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
             }
             fileMates.close();
         }
-
-
 
 
         fragmentLength = fragmentLength/j;
@@ -214,10 +233,9 @@ void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegion
 
     ofstream myfile;
     myfile.open(bedFileWithRegionsOfInterest.c_str());
-    for (int i = 0; i < chr_names.size(); i++)
-        {
+    for (unsigned int i = 0; i < chr_names.size(); i++)  {
         myfile << "chr"<< chr_names[i] << "\t" << "1" << "\t" << lengths[i] << "\n";
-        }
+    }
     myfile.close();
 }
 

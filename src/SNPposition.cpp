@@ -37,40 +37,33 @@ SNPposition::SNPposition(int position, char* alt) //for a VCF line
 }
 
 
-SNPposition::SNPposition(int position, char* letters, const char* strand, const char* ref)
+SNPposition::SNPposition(int position, char* letters, const char* strand, const char* ref) //for .txt line
 {
     position_=position;
     char* strs[4];
-    if (strlen(letters) == 1)
-    {
-        char c_ref = ref[0];
-        bool reverse = strcmp(strand, "-") == 0;
+    bool reverse = strcmp(strand, "-") == 0;
+    if (strlen(letters) == 1)    { //should not get here
         nucleotide_ = letters[0];
-    }
-    else
-    {
+    }   else    {
         unsigned strs_cnt = split(letters, '/', strs);
-        bool reverse = strcmp(strand, "-") == 0;
-
         char c_ref;
         if (reverse) {
-        c_ref = complement(ref[0]);
+            c_ref = complement(ref[0]);
         } else {
-        c_ref = ref[0];
+            c_ref = ref[0];
         }
         if (strs[0][0]==c_ref) {
             nucleotide_ = strs[1][0];
         } else {
             nucleotide_=strs[0][0];
         }
-
-        if (reverse) {
-            nucleotide_ = complement(nucleotide_);
-        }
     }
-        freq_ = 0; // EV: must be initialized
-        status_ = 0; // EV: must be initialized
-        bin_=NA; //before initialization
+    if (reverse) {
+        nucleotide_ = complement(nucleotide_);
+    }
+    freq_ = 0; // EV: must be initialized
+    status_ = 0; // EV: must be initialized
+    bin_=NA; //before initialization
 }
 
 

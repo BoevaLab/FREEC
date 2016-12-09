@@ -1636,8 +1636,8 @@ return n;
 
 void strkeepOnly(char *s, const char *c) {
     string newString;
-    for (int i = 0; i< strlen(s);i++) {
-        for (int j = 0; j< strlen(c);j++){
+    for (unsigned int i = 0; i< strlen(s);i++) {
+        for (unsigned int j = 0; j< strlen(c);j++){
             if (s[i]==c[j])
                 newString+=s[i];
                 break;
@@ -1648,8 +1648,8 @@ void strkeepOnly(char *s, const char *c) {
 }
 void strkeepOnly(string & s, const char *c) {
     string newString;
-    for (int i = 0; i< s.length(); i++) {
-        for (int j = 0; j< strlen(c);j++){
+    for (unsigned int i = 0; i< s.length(); i++) {
+        for (unsigned int j = 0; j< strlen(c);j++){
             if (s[i]==c[j]) {
                 newString+=s[i];
                 break;
@@ -1669,7 +1669,7 @@ std::string int2string (int a) {
 
 void deleteChar(std::string & s, char c, int moreLettersToDelete) {
     string newString;
-    for (int i = 0; i< s.length(); i++) {
+    for (unsigned int i = 0; i< s.length(); i++) {
         if (s[i]!=c) {
                 newString+=s[i];
         } else {
@@ -1683,7 +1683,7 @@ void deleteChar(std::string & s, char c, int moreLettersToDelete) {
 
 void deleteChar(std::string & s, char c) {
     string newString;
-    for (int i = 0; i< s.length(); i++) {
+    for (unsigned int i = 0; i< s.length(); i++) {
         if (s[i]!=c) {
                 newString+=s[i];
         }
@@ -1706,7 +1706,7 @@ void chomp (string & s) {
 
 void filterWithQualities(string & pileupShort,string & qualityS, int minimalQualityPerPosition) {
     string newString;
-    for (int i = 0; i< pileupShort.length(); i++) {
+    for (unsigned int i = 0; i< pileupShort.length(); i++) {
         int q = int (qualityS[i]);
         if (q>=minimalQualityPerPosition)
             newString+=pileupShort[i];
@@ -1883,7 +1883,7 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
         uncertainty = 1./(LogLikelyHoods[LogLikelyHoods.size()-1]-LogLikelyHoods[LogLikelyHoods.size()-2]);
    //     uncertainty = exp(LogLikelyHoods[LogLikelyHoods.size()-2]-LogLikelyHoods[LogLikelyHoods.size()-1]);//since v9.4 : p(secondBest)/p(best)
         if (copyNumbers.size()>=1) {
-            if (copyNumbers[0]==1 && copyNumbers[1]==2 && copyNumber<1.5 && (medianBAFSym.compare("AA")==0 || medianBAFSym.compare("AB")==0 && uncertainty >0.1)) {
+            if (copyNumbers[0]==1 && copyNumbers[1]==2 && copyNumber<1.5 && (medianBAFSym.compare("AA")==0 || (medianBAFSym.compare("AB")==0 && uncertainty >0.1))) {
                 medianBAFSym="A";
                 estimatedBAF = 0;
                 fittedBAF=NA;
@@ -1905,7 +1905,7 @@ float & uncertainty, float normalContamination,int ploidy, bool noisyData, bool 
             if (copyNumbers[0]>1 && winningCN!=preferedCN) { //check uncertainty for ambigous cases
                 float preferedCNLogLH=-INFINITY;
                 int bestInd=NA;
-                for(int jj=0; jj<testedCN.size();jj++) {
+                for(unsigned int jj=0; jj<testedCN.size();jj++) {
                     if (testedCN[jj]==preferedCN && preferedCNLogLH<LogLikelyHoods_sec[jj]) {
                         preferedCNLogLH=LogLikelyHoods_sec[jj];
                         bestInd=jj;

@@ -1,3 +1,24 @@
+/*************************************************************************
+Copyright (c) 2010-2011, Valentina BOEVA.
+
+>>> SOURCE LICENSE >>>
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation (www.fsf.org); either version 2 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+A copy of the GNU General Public License is available at
+http://www.fsf.org/licensing/licenses
+
+>>> END OF LICENSE >>>
+*************************************************************************/
+
+
 #include "SeekSubclones.h"
 
 using namespace std;
@@ -64,7 +85,7 @@ void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::st
             cerr << "Problem with the number of breakpoints:" <<breakpoints.size()<< " != " << samplecopynumber.getChrCopyNumberAt(index).getMedianValues().size()<<"\n";
             exit(-1);
         }
-        for (int fragmentCount=0; fragmentCount<breakpoints.size(); fragmentCount++) {
+        for (unsigned int fragmentCount=0; fragmentCount<breakpoints.size(); fragmentCount++) {
             bpend=breakpoints[fragmentCount];
             float fragmentMedian=samplecopynumber.getChrCopyNumberAt(index).getMedianValuesAt(fragmentCount);
 
@@ -86,7 +107,7 @@ void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::st
                         myfile << "Possible subclones for fragment chr" << chrNumber << ":" << samplecopynumber.getChrCopyNumberAt(index).getCoordinateAtBin(bpstart) << "-" << samplecopynumber.getChrCopyNumberAt(index).getEndAtBin(bpend-1) << "\n";
                         myfile << "Major clone is suggest to have " << expected*ploidy_ << " copies\n";
                         myfile << "\t Copy number in Subclone (different possibilities) \t Subclonal population \n";
-                        for (int k = 0; k < copynumber_.size(); k++) {
+                        for (unsigned int k = 0; k < copynumber_.size(); k++) {
                             myfile << "\t" << copynumber_[k] << "\t" << population_[k]*100 << "% \n";
                         }
                         myfile << "\n";
@@ -113,7 +134,7 @@ bool SeekSubclones::SignTest(std::vector <float>& data, float& threshold, int bo
     int upvalues = 0;
     int downvalues = 0;
     bool subclone = false;
-    for (int i = 0; i < data.size(); i++) {
+    for (unsigned int i = 0; i < data.size(); i++) {
         if (data[i]!=NA){
             if (data[i] < threshold)  {
                 downvalues++;
@@ -141,7 +162,7 @@ bool SeekSubclones::PercentageTest(std::vector <float>& data, float& threshold)
     int upvalues = 0;
     int downvalues = 0;
     bool subclone = false;
-    for (int i = 0; i < data.size(); i++)
+    for (unsigned int i = 0; i < data.size(); i++)
         {
         if (data[i] < threshold)
             {
@@ -178,7 +199,7 @@ void SeekSubclones::EstimateSubclonalPopulation(vector <float> data, float thres
     float sumtmp = 0;
     threshold = threshold*ploidy_;
     int countData = 0;
-    for (int i = 0; i < data.size(); i++) {
+    for (unsigned int i = 0; i < data.size(); i++) {
         if (data[i]!=NA) {
             sumtmp += data[i];
             countData++;

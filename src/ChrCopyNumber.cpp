@@ -91,35 +91,6 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
             cout << "..Reading "<< captureFile << "\n";
             cout << "..Your file must be in .BED format, and it must be sorted\n";
             std::string line;
-//            exons_Count = 0;
-//            exons_Countchr = 0;
-//            while (std::getline(file,line))
-//                {
-//                    exons_Count++;
-//                }
-//            chr_namestmp = vector<string>(exons_Count);
-//            int l=0;
-//            file.clear();
-//            file.seekg(0);
-//            while (std::getline(file,line))
-//                {
-//                    int i = 0;
-//                    while (line[i] != 'r')
-//                        {
-//                        i++;
-//                        }
-//                        i++;
-//                    while (line[i] != '\t')
-//                        {
-//                        chr_namestmp[l] += line[i];
-//                        i++;
-//                        }
-//                        i++;
-//                        l++;
-//                }
-//            file.clear();
-//            file.seekg(0);
-//            l = 0;
 
 			// length_ should end up equal to the number of exons matching this chromosome.
 			length_ = 0;
@@ -127,12 +98,6 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 
 
             while (std::getline(file,line))   {
-//
-//                if (chr_namestmp[l] == chromosome_)
-//                    {
-//                    exons_Countchr++;
-//                    }
-//                    l++;
 
 					// Avoid catching a carriage return if the file uses windows-style line endings
 					if(line.size() != 0 && line[line.size() - 1] == '\r')
@@ -192,20 +157,9 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 
                 }
 
-//            length_ = exons_Countchr;
-//            coordinatesTmp_ = vector<string>(exons_Countchr);
-//            endsTmp_ = vector<string>(exons_Countchr);
-//            genes_names = vector<string>(exons_Countchr);
-//            chr_names= vector<string>(exons_Countchr);
-//
-//            l=0;
-//            int j = 0;
-//            file.clear();
-//            file.seekg(0);
-            if(tried != length_) {
+            if(int(tried) != length_) {
                 std::cerr << "Warning: skipped " << (tried - length_) << " lines due to formatting problems\n";
             }
-
 
             exons_Countchr_ = length_;
 
@@ -349,7 +303,7 @@ float ChrCopyNumber::getPopulation_subc(int i)
 
 std::string ChrCopyNumber::getGeneNameAtBin(int i)
 {
-    if (genes_names.size()>=i)
+    if (i<int(genes_names.size()))
         return genes_names[i];
     return "";
 }
@@ -373,7 +327,7 @@ int ChrCopyNumber::getExons_Countchr() {
 }
 
 void ChrCopyNumber::setNotNprofileAt(int i, float value) {
-    if (i<notNprofile_.size())
+    if (i<int(notNprofile_.size()))
         notNprofile_[i] = value;
     else
         cout <<"out of boundaries!!\n";
@@ -513,15 +467,10 @@ void ChrCopyNumber::recalculateRatio(ChrCopyNumber control){
 				ratio_[i] = ratio_[i]/controlRatio;
 				if (ratio_[i]<0)
 					ratio_[i] = NA;
-			}
-			else
+			}	else
 				ratio_[i] = NA;
 		} else
-			if (ratio_[i]==0)
-				//ratio_[i] = 1;
-				ratio_[i] = NA;
-			else
-				ratio_[i] = NA;
+			ratio_[i] = NA;
 		//cout << readCount_[i] << "\t" << control.getValueAt(i) << "\t" << ratio_[i] << "\n";
 	}
 }
@@ -573,7 +522,7 @@ void ChrCopyNumber::setAllNormal() {
 	if ((int)ratio_.size()!=length_)
 		ratio_.resize(length_);
 	for (int i = 0; i<length_; i++) {
-		if (readCount_[i] != NA && i<notNprofile_.size() &&notNprofile_[i]>0) {
+		if (readCount_[i] != NA && i<int(notNprofile_.size()) &&notNprofile_[i]>0) {
             ratio_[i] = 1;
 		} else {
 			ratio_[i] = NA;
@@ -724,7 +673,7 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
 	vector <int> seg_ends;
 	vector <int> seg_starts;
 
-    if (medianProfile_.size()!=length_) {
+    if (int(medianProfile_.size())!=length_) {
         	medianProfile_ = vector <float> (length_,NA);
     }
 
@@ -784,7 +733,7 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
 
         bool ifHomoz = false;
         float locMedian=NA;
-        if (data.size()>=minCNAlength && data.size()>0)
+        if (int(data.size())>=minCNAlength && data.size()>0)
             locMedian = get_median(data); //including the last point
         if (isBAFpresent && notNA > 100 && locMedian < 1 && noisyData ) {
             vector<string>heteroValuesPerWindowStrings = split(BAFValuesInTheSegment, ';');
@@ -1544,7 +1493,7 @@ std::string ChrCopyNumber::getBAFsymbolAt (int i) {
 }
 
 float ChrCopyNumber::getEstimatedBAFuncertaintyAtI(int i) {
-    if (i>0 &&i<estimatedBAFuncertainty_.size())
+    if (i>0 &&i<int(estimatedBAFuncertainty_.size()))
         return estimatedBAFuncertainty_[i];
     return NA;
 }
@@ -1717,12 +1666,12 @@ float ChrCopyNumber::getLevelAt(int unsigned i, int ploidy) {
 
 
 void ChrCopyNumber::setRCountToZeroForNNNN() {
-    for (int i = 0; i< notNprofile_.size(); i++) {
+    for (unsigned int i = 0; i< notNprofile_.size(); i++) {
         if (notNprofile_[i]==0) {
             readCount_[i]=0;
         }
     }
-    for (int i = notNprofile_.size(); i< readCount_.size(); i++) {
+    for (unsigned int i = notNprofile_.size(); i< readCount_.size(); i++) {
             readCount_[i]=0;
     }
 }
