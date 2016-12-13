@@ -65,7 +65,7 @@ extern bool uniqueMatch;
 //#include "GenomeCopyNumber.h"
 
 
-void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber & controlCopyNumber, bool isControlIsPresent, int forceGC,
+int runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber & controlCopyNumber, bool isControlIsPresent, int forceGC,
         bool has_BAF,bool ifTargeted,bool WESanalysis,
         int degree,int intercept,bool logLogNorm,float minExpectedGC,float maxExpectedGC,float knownContamination,float breakPointThreshold,int breakPointType,int minCNAlength,
         int teloCentroFlanks, std::vector<double> & RSS, std::vector<double> &percentage_GenExpl,bool contaminationAdjustment,std::vector<double> &contamination,

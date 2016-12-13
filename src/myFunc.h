@@ -105,7 +105,7 @@ float polynomial(const float x, const double a0, const double a1, const double a
 float polynomial(const float x, const double * a, double ratio, int degree); //any degree
 float runEM(const std::vector<float>& x,const std::vector<float>& y,double & a0, double & a1, double & a2,  double & a3,int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies);
 float runEM(const std::vector<float>& x,const std::vector<float>& y,double * a, int degree, int &NumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept,float contamination); //Caution: will change the parameter of NumberOfIterations!!!!
-float runEMlog (const std::vector<float>& x,const std::vector<float>& y,double * a, int degree, int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) ;
+float runEMlog (const std::vector<float>& x,const std::vector<float>& y,double * a, int degree, int &realNumberOfIterations, int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) ;
 
 float runEM_linear(const std::vector<float>& x,const std::vector<float>& y,double & a0, double & a1,int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies);
 int round_f(float r);
@@ -121,6 +121,7 @@ std::string int2string (int);
 void filterWithQualities(std::string & pileupShort,std::string & qualityS, int minimalQualityPerPosition);
 void chomp (char* s);
 void chomp (std::string & s) ;
+std::string stringFromBool (bool value) ;
 
 void getBAFinfo(std::string BAFValuesInTheSegment,float copyNumber,float &estimatedBAF,float &fittedBAF,
     std::string &medianBAFSym,float &uncertainty, float normalContamination,int ploidy, bool noisyData, bool ifHomoz, bool CompleteGenomicsData);

@@ -41,8 +41,9 @@ public:
     void removeLowReadCountWindows(GenomeCopyNumber & controlCopyNumber, int RCThresh);
     void removeLowReadCountWindowsFromControl (int RCThresh);
 
-	void calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) ;
+	int calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) ;
     void calculateRatioUsingCG( GenomeCopyNumber & controlCopyNumber) ;
+    void calculateRatioUsingCG_Regression( GenomeCopyNumber & controlCopyNumber) ;
 	float calculateNormalizationConstant(GenomeCopyNumber & controlCopyNumber);
 	void calculateBreakpoints(double breakPointThreshold, int breakPointType);
 	void calculateBAFBreakpoints(double breakPointThreshold, int breakPointType);
@@ -55,8 +56,8 @@ public:
 	void calculateCopyNumberProbs_and_exomeLength(int breakPointType) ;
 	void deleteFlanks(int telo_centromeric_flanks);
 	void recalcFlanks(int telo_centromeric_flanks, int minNumberOfWindows);
-	void calculateRatioUsingCG (bool intercept, float minExpectedGC, float maxExpectedGC) ; //will try different degrees
-	void calculateRatioUsingCG (int degree, bool intercept, float minExpectedGC, float maxExpectedGC) ;
+	int calculateRatioUsingCG (bool intercept, float minExpectedGC, float maxExpectedGC) ; //will try different degrees; returns 1 if #interation < max
+	int calculateRatioUsingCG (int degree, bool intercept, float minExpectedGC, float maxExpectedGC) ;
 
     void recalculateRatioUsingCG (int degree, bool intercept, float minExpectedGC, float maxExpectedGC) ;
 	void recalculateRatio (float contamination);
@@ -86,6 +87,7 @@ public:
 	void printCNVs (std::string const& outFile);
 	void printBAF(std::string const& outFile, SNPinGenome& snpingenome, std::string const& matefile = "");
     void printBAF(std::string const& chr, std::ofstream & file, SNPatChr& snpAtChrom, std::string myName, std::string const& matefile);
+    void printInfo(std::ofstream & file) ;
 
     void shiftNeutalRatioTo1();
 
@@ -124,7 +126,7 @@ public:
      void setmakingPileup(bool makingPileup_given);
     double Percentage_GenomeExplained(int &);
     long double calculateRSS(int ploidy);
-
+    bool isMappUsed();
 
 private:
 
@@ -133,6 +135,7 @@ private:
     bool WESanalysis;
     bool makingPileup;
     bool SeekingSubc_;
+    bool isMappUsed_;
 	void fillMyHash(std::string const& mateFileName , std::string const& inputFormat, std::string const& matesOrientation, int windowSize, int step, std::string targetBed = "");
 	int windowSize_;
 	int step_;

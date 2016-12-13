@@ -32,7 +32,12 @@ GenomeCopyNumber::GenomeCopyNumber(void)
 	normalContamination_=0;
 	sex_="";
 	SeekingSubc_ = false;
+	isMappUsed_=false;
+    totalNumberOfPairs_=0;
+	normalNumberOfPairs_=0;
 }
+
+bool GenomeCopyNumber::isMappUsed() {return isMappUsed_;}
 
 void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::string const& inputFormat, std::string const& matesOrientation, std::string const& chrLenFileName, float coefficientOfVariation ) {
 	//first get the number of reads and the genome size
@@ -64,6 +69,10 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 
 	GenomeCopyNumber::fillMyHash(mateFileName ,inputFormat, matesOrientation, windowSize, windowSize);
 
+}
+
+long GenomeCopyNumber::getNormalNumberOfPairs(void) {
+	return normalNumberOfPairs_;
 }
 
 int GenomeCopyNumber::getWindowSize(void) {
@@ -527,16 +536,16 @@ void GenomeCopyNumber::setAllNormal () {
 	}
 }
 
-void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedGC, float maxExpectedGC) {
+int GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedGC, float maxExpectedGC) { //returns 1 if the number of iteration is less than max; otherwise 0
 
      //try degree 3 and 4, SELECT THE ONE WITH LESS ITTERATIONS:
     int minDegreeToTest = 3;
     int maxDegreeToTest = 4;
     int selectedDegree=minDegreeToTest;
-    int maximalNumberOfIterations = 100;
+    int maximalNumberOfIterations = 300;
     int bestNumberOfIterations=maximalNumberOfIterations;
    // int bestSqareError=INFINITY;
-
+    int valueToReturn = 0;
 
 
     vector <float> y; //y ~ ax^2+bx+c
@@ -646,7 +655,7 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
         float rmserror = runEM(x,y,a,degree,realNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
         if (rmserror == -1) {
             cerr << "Error in EM => unable to calculate normalized profile\n";
-            return;
+            return 0;
         }
         cout << "root mean square error = " << rmserror << "\n";
         if (realNumberOfIterations<bestNumberOfIterations) {
@@ -721,10 +730,12 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
 	else
 		a[degree] = 0;
 
-    float rmserror = runEM(x,y,a,degree,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
+    int realNumberOfIterations = maximalNumberOfIterations;
+
+    float rmserror = runEM(x,y,a,degree,realNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
 	if (rmserror == -1) {
 		cerr << "Error in EM => unable to calculate normalized profile\n";
-		return;
+		return 0;
 	}
 	cout << "root mean square error = " << rmserror << "\n";
 	if (degree == 3) {
@@ -748,11 +759,15 @@ void GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedG
 	}
     x.clear();
     y.clear();
+
+    if (realNumberOfIterations<maximalNumberOfIterations)
+        valueToReturn = 1;
+    return valueToReturn;
 }
 
 
 
-void GenomeCopyNumber::calculateRatioUsingCG (int degree, bool intercept, float minExpectedGC, float maxExpectedGC) {
+int GenomeCopyNumber::calculateRatioUsingCG (int degree, bool intercept, float minExpectedGC, float maxExpectedGC) {
 
 	if (degree > MAXDEGREE) {
         cerr << "polynomial degree should be < 10\n";
@@ -764,6 +779,7 @@ void GenomeCopyNumber::calculateRatioUsingCG (int degree, bool intercept, float 
 	//first guess about parameters
 	const int npoints = degree+2;
 
+    int valueToReturn = 0;
 
 	double around [MAXDEGREE+2];
 	for (int i = 0; i<npoints; i++) {
@@ -855,12 +871,17 @@ void GenomeCopyNumber::calculateRatioUsingCG (int degree, bool intercept, float 
 			}
         }
 	}
-	int maximalNumberOfIterations = 100;
-    float rmserror = runEM(x,y,a,degree,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
+	int maximalNumberOfIterations = 300;
+	int realNumberOfIterations = maximalNumberOfIterations;
+    float rmserror = runEM(x,y,a,degree,realNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
 	if (rmserror == -1) {
 		cerr << "Error in EM => unable to calculate normalized profile\n";
-		return;
+		return 0;
 	}
+
+	if (realNumberOfIterations<maximalNumberOfIterations)
+        valueToReturn = 1;
+
 	cout << "root mean square error = " << rmserror << "\n";
 	if (degree == 3) {
 		cout << "Y = " << a[0] << "*x*x*x+" << a[1] << "*x*x+" << a[2] << "*x+" << a[3] <<"\n";
@@ -883,6 +904,7 @@ void GenomeCopyNumber::calculateRatioUsingCG (int degree, bool intercept, float 
 	}
     x.clear();
     y.clear();
+    return valueToReturn;
 }
 
 void GenomeCopyNumber::setPloidy(int ploidy) {
@@ -1122,12 +1144,93 @@ void GenomeCopyNumber::calculateRatioUsingCG( GenomeCopyNumber & controlCopyNumb
 	}
 }
 
-void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) {
+void GenomeCopyNumber::calculateRatioUsingCG_Regression( GenomeCopyNumber & controlCopyNumber) {
+
+    int degree = 1;
+    bool intercept=0;
+    cout << "..polynomial degree set to 1\n";
+    cout << "Initial guess for polynomial:\n";
+
+    //first guess about parameters
+
+    double a[MAXDEGREE+1];
+
+    a[degree] = 0;
+    a[0]=1;
+
+    cout << "Y = " << a[0] << "*x+" << a[1] << "\n";
 
 
     int maximalNumberOfIterations = 300;
     int maximalNumberOfCopies = ploidy_*2;
 
+    vector <float> y; //y ~ a0x+a1
+    vector <float> x;
+    vector <int> positions;
+
+    //fill x and y:
+    vector<ChrCopyNumber>::iterator it;
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+            vector <float> controlcounts = controlCopyNumber.getChrCopyNumber(it->getChromosome()).getRatio() ;
+            //check that everything is all right:
+            if (int(controlcounts.size())!=it->getLength()) {
+                cerr << "Possible Error: calculateMedianAround ()\n";
+            }
+            for (int i = 0; i< it->getLength(); i++) {
+                if (it->getRatioAtBin(i)>0 && controlcounts[i]>0) {
+                    x.push_back(controlcounts[i]);
+                    y.push_back(it->getRatioAtBin(i));
+                    positions.push_back(it->getCoordinateAtBin(i));
+                }
+            }
+            controlcounts.clear();
+        }
+    }
+    if (degree==1) {
+        const char * nametmp = "/home/vboeva/NAS_public/data/projects/FREEC/TEST_FREEC_CLBMA_WES/output_WES/xy.txt";
+        std::ofstream file;
+        file.open(nametmp);
+        for ( unsigned int i=0 ;i<x.size(); i++ ) {
+             file << positions[i]<<"\t"<<x[i] <<"\t" << y[i] <<"\n" ;
+        }
+        file.close();
+    }
+    float rmserror = runEM(x,y,a,degree,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
+    if (rmserror == -1) {
+        cerr << "Error in EM => unable to calculate normalized profile\n";
+        return;
+    }
+    cout << "root mean square error = " << rmserror << "\n";
+
+    cout << "Y = " << a[0] << "*x+" << a[1] << "\n";
+
+
+    //devide sample/control with the identified constant that should not be too far away from 1:
+
+	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+            it->recalculateRatio(controlCopyNumber.getChrCopyNumber(it->getChromosome()));
+            it->recalculateRatio(a[0]);
+	}
+
+	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if (sex_.compare("XY")==0 && (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+            //should take into account that normally one has only one copy of X and Y..
+            it->recalculateRatio(2);
+	    }
+	}
+
+	//XXX
+}
+
+int GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) {
+
+
+    int maximalNumberOfIterations = 300;
+    int maximalNumberOfCopies = ploidy_*2;
+    int realNumberOfIterations = maximalNumberOfIterations;
+
+    int successfulFit = 0;
 
 	if(logLogNorm) {
         intercept=1; degree=1;//because it is loglogscale
@@ -1200,14 +1303,16 @@ void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int
             }
             cout << a[degree] <<"\n";
         }
-
-        float rmserror = runEMlog(x,y,a,degree,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
+        float rmserror = runEMlog(x,y,a,degree,realNumberOfIterations,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
         if (rmserror == -1) {
             cerr << "Error in EM => unable to calculate normalized profile\n";
-            return;
+            return 0;
         }
         cout << "root mean square error = " << rmserror << "\n";
 
+        if (realNumberOfIterations<maximalNumberOfIterations) {
+            successfulFit = 1;
+        }
 
 		if (degree == 1) {
             cout << "log(Y) = " << a[0] << "*log(x)+" << a[1] << "\n";
@@ -1371,12 +1476,16 @@ void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int
 	//}
 	//file.close(); exit(0);
 
-        float rmserror = runEM(x,y,a,degree,maximalNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
+        float rmserror = runEM(x,y,a,degree,realNumberOfIterations,ploidy_,maximalNumberOfCopies, intercept, normalContamination_);
         if (rmserror == -1) {
             cerr << "Error in EM => unable to calculate normalized profile\n";
-            return;
+            return 0;
         }
         cout << "root mean square error = " << rmserror << "\n";
+
+        if (realNumberOfIterations<maximalNumberOfIterations) {
+            successfulFit = 1;
+        }
 
         if (degree == 3) {
             cout << "Y = " << a[0] << "*x*x*x+" << a[1] << "*x*x+" << a[2] << "*x+" << a[3] <<"\n";
@@ -1403,6 +1512,7 @@ void GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int
             }
         }
     }
+    return successfulFit;
 }
 
 void GenomeCopyNumber::calculateReadCountQuartiles(int& lower, int& upper) {
@@ -2323,6 +2433,7 @@ void GenomeCopyNumber::readGemMappabilityFile(std::string const& inFile) {
 	    cout << "..Reading "<< inFile << "\n";
 	    int countChromosomes = 0;
 	    int countChromosomesOutOfIndex = 0;
+	    isMappUsed_=true;
 		while (! file.eof() )	{
 			getline (file,line);
 			if (! line.length()) continue;
@@ -2716,6 +2827,12 @@ void GenomeCopyNumber::printCopyNumber(std::string const& chr, std::string const
 	std::ofstream file (outFile.c_str());
 	printCopyNumber(chr,file);
 	file.close();
+}
+
+void GenomeCopyNumber::printInfo(std::ofstream & file) {
+    file << "Output_Ploidy\t" <<ploidy_<< endl;
+    file << "Sample_Purity\t" <<1-normalContamination_<< endl;
+
 }
 
 void GenomeCopyNumber::printCNVs (std::string const& outFile) {

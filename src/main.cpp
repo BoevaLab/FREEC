@@ -589,6 +589,7 @@ int main(int argc, char *argv[])
         cout << "..Control-FREEC will not look for subclones\n";
 
 // createNames:
+    string sampleName="";
 
 	char rsymb = '/';
 	std::vector<std::string> elems = split(myName, '\\');
@@ -600,12 +601,13 @@ int main(int argc, char *argv[])
 	if (elems.size()>1)
 		rsymb = '/';
 	myName = elems.back();
+	sampleName=myName;
 	if (outputDir.compare("")!=0) {
 		char lsymb = outputDir.at(outputDir.length()-1);
 		if (lsymb != '/' && lsymb != '\\' ) {
 			outputDir = outputDir+rsymb;
 		}
-			myName = outputDir+myName;
+        myName = outputDir+myName;
 	}
 
 
@@ -801,8 +803,10 @@ int main(int argc, char *argv[])
     }
 
 	sampleCopyNumber.setSex(sex);
+	bool isLookingForSubclones =false;
 	if (seekSubclones < 100 && seekSubclones>0) {
         sampleCopyNumber.setSeekSubclones(true);
+        isLookingForSubclones=true;
     }
 
     //READ CONTROL DATA:
@@ -820,9 +824,12 @@ int main(int argc, char *argv[])
        controlCopyNumber.setSex(sex);
     }
 
+    //determine telomeric/centromeric region length
+    if(ifTargeted) {
+        cout << "..FREEC will take into account only regions from "<<targetBed<<"\n";
+ 	}
     //if it is a TARGETED resequencing experiment, delete all info outside of the target regions
 	if(ifTargeted && WESanalysis == false) {
-        cout << "..FREEC will take into account only regions from "<<targetBed<<"\n";
         int minRegion = sampleCopyNumber.focusOnCapture(targetBed);
         if (teloCentroFlanks>minRegion) {
             teloCentroFlanks = minRegion;
@@ -914,12 +921,13 @@ int main(int argc, char *argv[])
     if (seekSubclones < 100 && seekSubclones>0)
         controlCopyNumber.setSeekSubclones(true); //CARINO, WHY DO YOU NEED TO SET IT FOR THE CONTROL?
 
+    int isSuccessfulFit = 0;
 
     for (unsigned int i=0;i < ploidies.size(); i++ ) {
         ploidy = ploidies[i];
         cout << "..Running FREEC with ploidy set to " << ploidy << "\n";
 
-        runWithDefinedPloidy(ploidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
+        isSuccessfulFit = runWithDefinedPloidy(ploidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,
         makePileup,seekSubclones,myName,unexplainedChromosomes, CompleteGenomicsData);
@@ -955,19 +963,20 @@ int main(int argc, char *argv[])
 
     if (bestPloidy!=ploidies.back()) {
         cout << "..Running FREEC with ploidy set to " << bestPloidy << "\n";
-        runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
+        isSuccessfulFit=runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,makePileup,seekSubclones,
          myName,unexplainedChromosomes, CompleteGenomicsData);
     }
 
+    double breakPointThreshold_BAF=1;
 	if (has_BAF || makePileup != "false") {
-        breakPointThreshold = 0.8;
+        breakPointThreshold_BAF = 0.8;
         if (ifTargeted)
-            breakPointThreshold = 1.6;
+            breakPointThreshold_BAF = 1.6;
 
         if (WESanalysis == true)
-            breakPointThreshold = 5;
+            breakPointThreshold_BAF = 5;
 
 		thrPool = thrPoolManager->newThreadPool("SNPinGenome_perform");
 
@@ -975,24 +984,24 @@ int main(int argc, char *argv[])
 
         if (makePileup == "false")
             {
-            snpArg = new SNPinGenomePerformArgWrapper(snpingenome, sample_MateFile, sample_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData,CompleteGenomicsData,sampleCopyNumber, breakPointThreshold, breakPointType, minCNAlength, "Sample");
+            snpArg = new SNPinGenomePerformArgWrapper(snpingenome, sample_MateFile, sample_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData,CompleteGenomicsData,sampleCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Sample");
             thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
             }
         else
             {
-            snpArg = new SNPinGenomePerformArgWrapper(snpingenome, samplePileup, "pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData,CompleteGenomicsData,sampleCopyNumber, breakPointThreshold, breakPointType, minCNAlength, "Sample");
+            snpArg = new SNPinGenomePerformArgWrapper(snpingenome, samplePileup, "pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData,CompleteGenomicsData,sampleCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Sample");
             thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
             }
         //the same for the control sample:
         if (isControlIsPresent) {
             if (makePileup == "false")
                 {
-                snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile, control_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, CompleteGenomicsData,controlCopyNumber, breakPointThreshold, breakPointType, minCNAlength, "Control");
+                snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile, control_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, CompleteGenomicsData,controlCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Control");
                 thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
                 }
             else
                 {
-                //snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile,"pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, controlCopyNumber, breakPointThreshold, breakPointType, minCNAlength, "Control");
+                //snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile,"pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, controlCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Control");
                 //thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
                 }
 		}
@@ -1020,11 +1029,32 @@ int main(int argc, char *argv[])
     }
 	sampleCopyNumber.printCNVs(myName+"_CNVs");
 
+	//printing parameters and summary into the Information file easy to parse
+	std::ofstream file ((myName+"_info.txt").c_str());
+	file << "Program_Version\tv" <<FREEC_VERSION << endl;
+    file << "Sample_Name\t" <<sampleName << endl;
+    file << "Control_Used\t" <<stringFromBool(isControlIsPresent) << endl;
+    if (isUseGC || forceGC>0)
+        file << "CGcontent_Used\tTrue" << endl;
+    if (!(isUseGC || forceGC>0))
+        file << "CGcontent_Used\tFalse" << endl;
+    file << "Mappability_Used\t"<<stringFromBool(sampleCopyNumber.isMappUsed()) << endl;
+    file << "Looking_For_Subclones\t" <<stringFromBool(isLookingForSubclones) << endl;
+	file << "Breakpoint_Threshold\t"<<breakPointThreshold<< endl;
+	//file << "Size_Of_Ignored_Telo_Centromeric_Regions\t"<<teloCentroFlanks<< endl;
+	file << "Window\t"<<window<< endl;
+	file << "Number_Of_Reads|Pairs_In_Sample\t"<<sampleCopyNumber.getNormalNumberOfPairs()<< endl;
+	file << "Number_Of_Reads|Pairs_In_Control\t"<<controlCopyNumber.getNormalNumberOfPairs()<< endl;
+    sampleCopyNumber.printInfo(file); //for ploidy & contamination
+    file << "Good_Polynomial_Fit\t"<<stringFromBool(bool(isSuccessfulFit))<< endl;
+
+	file.close();
 
 	return 0;
 }
 
-void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber & controlCopyNumber, bool isControlIsPresent, int forceGC,
+
+int runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber & controlCopyNumber, bool isControlIsPresent, int forceGC,
         bool has_BAF,bool ifTargeted,bool WESanalysis,
         int degree,int intercept,bool logLogNorm,float minExpectedGC,float maxExpectedGC,float knownContamination,float breakPointThreshold,int breakPointType,int minCNAlength,
         int teloCentroFlanks, vector<double> & RSS, vector<double> &percentage_GenExpl,bool contaminationAdjustment,vector<double> &contamination, ThreadPool * thrPool,
@@ -1033,23 +1063,27 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         sampleCopyNumber.setPloidy(ploidy);
         sampleCopyNumber.setNormalContamination(knownContamination);
 
+        int successfulFit = 1;
 
         if (isControlIsPresent) {
             if (((!forceGC) && (!has_BAF)) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0)) { //normalize sample density with control density
-                sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
+                successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
             } else { //forceGC != 0
                 if (forceGC==1) { //normalize first Sample and Control, and then calculate the ratio
                     if (degree==NA) {
-                        sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
-                        controlCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                        successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                        if (controlCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC)==0)
+                            successfulFit = 0;
                     }
                     else {
-                        sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
-                        controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                        successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                        if (controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
+                            successfulFit = 0;
                     }
                     sampleCopyNumber.calculateRatioUsingCG(controlCopyNumber);
+                    //sampleCopyNumber.calculateRatioUsingCG_Regression(controlCopyNumber);
                 } else if (forceGC==2) {  //calculate the ratio , normalize for GC
-                    sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
+                    successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
                     sampleCopyNumber.recalculateRatioUsingCG(8, 1,minExpectedGC,maxExpectedGC); //try higher values of polynomial's degree
                 }
             }
@@ -1058,18 +1092,20 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
 
                 if (forceGC==0) { //otherwise, already calculated for the Sample
                     if (degree==NA) {
-                        sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                        successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
                     }
                     else {
-                       sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                       successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
                     }
                 }
 
                 if (degree==NA) {
-                    controlCopyNumber.calculateRatioUsingCG(intercept,minExpectedGC,maxExpectedGC);
+                    if(controlCopyNumber.calculateRatioUsingCG(intercept,minExpectedGC,maxExpectedGC)==0)
+                        successfulFit = 0;
                 }
                 else {
-                    controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                    if(controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
+                        successfulFit = 0;
                 }
 
             }
@@ -1081,12 +1117,11 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
 
         } else { // no Control present
             if (degree==NA) {
-                sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
 
             }
             else {
-                sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
-
+                successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
             }
         }
         cout << "..Copy number profile normalization -> done\n";
@@ -1125,12 +1160,11 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         cout << std::flush;
         sampleCopyNumber.calculateCopyNumberMedians(minCNAlength,0,CompleteGenomicsData);
         //sampleCopyNumber.calculatePloidy(minCNAlength);
-        sampleCopyNumber.shiftNeutalRatioTo1(); //experimental
+     //   sampleCopyNumber.shiftNeutalRatioTo1(); //experimental
 
-        if (WESanalysis == false)  // demander à Valentina
-        {
-        sampleCopyNumber.recalcFlanks(teloCentroFlanks, 3);
-        sampleCopyNumber.deleteFlanks(TELO_CENTRO_FLANCS);
+        if (WESanalysis == false)  {// demander à Valentina
+            sampleCopyNumber.recalcFlanks(teloCentroFlanks, 3);
+            sampleCopyNumber.deleteFlanks(TELO_CENTRO_FLANCS);
         }
         cout << "..annotate copy numbers\n";
         cout << std::flush;
@@ -1194,8 +1228,9 @@ void runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genom
         percentage_GenExpl.push_back(sampleCopyNumber.Percentage_GenomeExplained(unexplainedChromosomesByThisPloidy));
         RSS.push_back(RSStmp);
         unexplainedChromosomes.push_back(unexplainedChromosomesByThisPloidy);
-        if (contaminationAdjustment == true)
-            {
+        if (contaminationAdjustment == true)  {
             contamination.push_back(contamValue);
-            }
+        }
+
+        return successfulFit;
 }

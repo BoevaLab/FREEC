@@ -1407,6 +1407,10 @@ float runEM (const vector<float>& x,const vector<float>& y,double & a0,double & 
 	cout << "Number of EM iterations :" << count << "\n";
 	return rmserror;
 }
+std::string stringFromBool (bool value) {
+    if (value) return "True";
+    return "False";
+}
 
 float runEM (const vector<float>& x,const vector<float>& y,double * a, int degree, int & NumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) {
 
@@ -1504,7 +1508,7 @@ float runEM (const vector<float>& x,const vector<float>& y,double * a, int degre
 }
 
 
-float runEMlog (const vector<float>& x,const vector<float>& y,double * a, int degree, int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) {
+float runEMlog (const vector<float>& x,const vector<float>& y,double * a, int degree, int & realNumberOfIterations, int maximalNumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) {
 
 	float rmserror = -1;
 
@@ -1594,6 +1598,7 @@ float runEMlog (const vector<float>& x,const vector<float>& y,double * a, int de
 	cluster.clear();
 	res.clear();
 	cout << "Number of EM iterations :" << count << "\n";
+	realNumberOfIterations=count;
 	return rmserror;
 }
 
