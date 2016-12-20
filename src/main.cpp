@@ -639,7 +639,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    if (WESanalysis==false && window!=0) {
+    if (ifTargeted==true && window!=0) {
         cerr << "Warning: we recommend setting \"window=0\" for exome sequencing data\n";
     }
 

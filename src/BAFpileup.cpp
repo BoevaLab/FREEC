@@ -44,7 +44,7 @@ void BAFpileup::makepileup(GenomeCopyNumber & sampleCopyNumber, GenomeCopyNumber
         }
     else
         {
-        createBedFileWithChromosomeLengths(bedFileWithRegionsOfInterest,chrLenFileName);
+        createBedFileWithChromosomeLengths(bedFileWithRegionsOfInterest,chrLenFileName, true);
         }
     pathToBedtools_=pathToBedtools; // /*
     string intersected = intersectWithBedtools(makeminipileup, outputDir, bedFileWithRegionsOfInterest, chrLenFileName);
@@ -183,7 +183,7 @@ void BAFpileup::calculateNewBoundaries(std::string targetBed, int flanks, std::s
         }
 }
 
-void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegionsOfInterest, std::string chrLenFileName) {
+void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegionsOfInterest, std::string chrLenFileName, bool doesNeedChrPrefix) {
 
     //reading the file with the chromosome length information
     std::vector<std::string> chr_names;
@@ -234,7 +234,10 @@ void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegion
     ofstream myfile;
     myfile.open(bedFileWithRegionsOfInterest.c_str());
     for (unsigned int i = 0; i < chr_names.size(); i++)  {
-        myfile << "chr"<< chr_names[i] << "\t" << "1" << "\t" << lengths[i] << "\n";
+        if(doesNeedChrPrefix)
+            myfile << "chr"<< chr_names[i] << "\t" << "1" << "\t" << lengths[i] << "\n";
+        else
+            myfile << chr_names[i] << "\t" << "1" << "\t" << lengths[i] << "\n";
     }
     myfile.close();
 }
@@ -281,6 +284,7 @@ std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::st
         std::vector<std::string> strs = split(line, '\t');
         myfile << strs[0] << "\t"<< atoi(strs[1].c_str()) -1 << "\t" <<  atoi(strs[1].c_str()) << "\t" << strs[3] << "\t" << strs[4]<<"\n";
     }
+    cout << "..will use "<<nb_snp<<" SNPs for calculation of the BAF profile\n";
     myfile.close();
     file.close();
     remove(intersected.c_str());
