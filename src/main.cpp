@@ -213,7 +213,10 @@ int main(int argc, char *argv[])
         cout << "..Will ignore the value of step since window size is not provided\n";
         step = NA;
     }
-
+    if (step >window) {
+        cerr << "Warning: you cannot use a value for the step size larger than window size\nWill set step "<< window<<"\n";
+        step=window;
+    }
 
 	string outputDir = (std::string)cf.Value("general","outputDir",".");
 	if ( access( outputDir.c_str(), 0 ) == 0 )    {
