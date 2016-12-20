@@ -98,7 +98,7 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
                           command = "gzip -c -d "+mateFileName;
             }
             stream =
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
                 _popen(command.c_str(), "r");
             #else
                 popen(command.c_str(), "r");
@@ -143,7 +143,7 @@ float BAFpileup::calculateFlankLength(std::string const& mateFileName, std::stri
         fragmentLength = fragmentLength/j;
         float flanks = fragmentLength/2;
         if (zgOrbam) {
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
 				_pclose(stream);
             #else
                     pclose(stream);
@@ -254,13 +254,13 @@ std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::st
     string command = pathToBedtools_ +" intersect -a " + makeminipileup + " -b " + bedFileWithRegionsOfInterest + " > " + intersected;
 
     stream =
-    #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+    #if defined(_WIN32)
         _popen(command.c_str(), "w");
     #else
         popen(command.c_str(), "w");
     #endif
 
-    #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+    #if defined(_WIN32)
     _pclose(stream);
     #else
     pclose(stream);
@@ -305,13 +305,13 @@ std::string BAFpileup::createPileUpFile(std::string outputDir, std::string samto
     }
 
     stream =
-    #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+    #if defined(_WIN32)
         _popen(command.c_str(), "w");
     #else
         popen(command.c_str(), "w");
     #endif
 
-    #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+    #if defined(_WIN32)
         _pclose(stream);
     #else
         pclose(stream);
