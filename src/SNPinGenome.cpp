@@ -118,7 +118,7 @@ void SNPinGenome::readSNPs(std::string const& inFile)
             char buffer[MAX_BUFFER];
             string command = "gzip -cd "+inFile;
             stream =
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
                       _popen(command.c_str(), "r");
             #else
                     popen(command.c_str(), "r");
@@ -128,7 +128,7 @@ void SNPinGenome::readSNPs(std::string const& inFile)
               if (line_buffer[0] == '#') continue;
               count+=processSNPLine(ifVCF,line_buffer,myChr,index,previousPos);
             }
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
                     _pclose(stream);
             #else
                     pclose(stream);
@@ -389,14 +389,14 @@ void SNPinGenome::assignValues(std::string const& inFile, string inputFormat, in
         if (inFile.substr(inFile.size()-3,3).compare(".gz")==0) {
 		  string command = "gzip -cd "+inFile;
 		  FILE* stream =
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
 				_popen(command.c_str(), "r");
 			#else
 				popen(command.c_str(), "r");
 			#endif
 				readPileUP(stream, minimalTotalLetterCountPerPosition, minimalQualityPerPosition, p_genomeCopyNumber);
 
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
                     _pclose(stream);
             #else
                     pclose(stream);

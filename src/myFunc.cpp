@@ -277,7 +277,7 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
     if (fileName.substr(fileName.size()-3,3).compare(".gz")==0) {
         string command = "gzip -cd "+fileName;
         stream =
-        #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+        #if defined(_WIN32)
             _popen(command.c_str(), "r");
         #else
             popen(command.c_str(), "r");
@@ -285,7 +285,7 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
         while ( fgets(buffer, MAX_BUFFER, stream) != NULL ) {
             count++;
         }
-        #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+        #if defined(_WIN32)
 				_pclose(stream);
 		#else
 				pclose(stream);
@@ -305,7 +305,7 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
             cout << "..samtools should be installed to be able to read BAM files\n";
             }
         stream =
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
 				_popen(command.c_str(), "r");
 			#else
 				popen(command.c_str(), "r");
@@ -314,7 +314,7 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
         while ( fgets(buffer, MAX_BUFFER, stream) != NULL ) {
             count++;
         }
-        #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+        #if defined(_WIN32)
 				_pclose(stream);
 		#else
 				pclose(stream);
@@ -353,7 +353,7 @@ long getReadNumberFromPileup(std::string const& fileName) {
         char buffer[MAX_BUFFER];
         string command = "gzip -cd "+fileName;
         stream =
-            #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+            #if defined(_WIN32)
 				_popen(command.c_str(), "r");
 			#else
 				popen(command.c_str(), "r");
@@ -373,7 +373,7 @@ long getReadNumberFromPileup(std::string const& fileName) {
             }
             strs.clear();
         }
-        #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+        #if defined(_WIN32)
 				_pclose(stream);
 		#else
 				pclose(stream);
@@ -1224,7 +1224,7 @@ string pathAppend(const string& p1, const string& p2) {
    char sep = '/';
    string tmp = p1;
    char sep2=sep;
-#if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
+#if defined(_WIN32)
   sep2 = '\\';
 #endif
   char lastSymb=  p1[p1.length( )-1];
