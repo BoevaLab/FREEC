@@ -247,7 +247,7 @@ std::string BAFpileup::intersectWithBedtools(std::string makeminipileup, std::st
     FILE *stream;
     std::string intersected = outputDir + "_SNPinNewCaptureRegions.bed";
 
-    if (makeminipileup.substr(makeminipileup.size()-3,3).compare("vcf")==0) {
+    if (makeminipileup.substr(makeminipileup.size()-3,3).compare("vcf")==0 || makeminipileup.substr(makeminipileup.size()-6,6).compare("vcf.gz")==0) {
         intersected = outputDir + "_SNPinNewCaptureRegions.vcf";
     }
 
