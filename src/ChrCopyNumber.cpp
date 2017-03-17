@@ -1458,6 +1458,16 @@ void ChrCopyNumber::fillCGprofile(std::string const& chrFolder) {
                     //count = end;
                     //and delete prefix in text;
                     int howMuchToDelete = nextStart - start;
+                    if (howMuchToDelete<0) {
+                        cerr << "Error: your BED file with coordinates of targeted regions does not seem to be sorted\nCheck chromosome "<<chromosome_<<"\n";
+                        cout << "Exit Control-FREEC: before reruning, please, sort the BED file with coordinates of the targeted regions\n";
+                        exit(-1);
+                    }
+                    if (howMuchToDelete==0) {
+                        cerr << "Error: your BED file with coordinates of targeted regions may contain duplicates\nCheck chromosome "<<chromosome_<<"\n";
+                        cout << "Exit Control-FREEC: before reruning sort the BED file with coordinates of the targeted regions and REMOVE DUPLICATED REGIONS\n";
+                        exit(-1);
+                    }
                     text = text.substr(howMuchToDelete);
 			    } else {
                     text = "";
