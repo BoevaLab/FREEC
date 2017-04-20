@@ -401,9 +401,9 @@ void GenomeCopyNumber::recalculateRatio (float contamination) {
     for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
         if (sex_.compare("XY")==0 && (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
             //should take into account that normally one has only one copy of X and Y..
-            it->recalculateRatioWithContam(contamination,0.5);
+            it->recalculateRatioWithContam(contamination,0.5, isRatioLogged_);
 	    } else
-            it->recalculateRatioWithContam(contamination,1);
+            it->recalculateRatioWithContam(contamination,1, isRatioLogged_);
 	}
 
 }
@@ -1101,19 +1101,21 @@ long double GenomeCopyNumber::calculateRSS(int ploidy)
 		int index = findIndex(chrNumber);
 		int length = chrCopyNumber_[index].getLength();
 		for (int i = 0; i< length; i++) {
-            float observed = 0;
-            float expected = 0;
-                {
-                observed = chrCopyNumber_[index].getRatioAtBin(i);
-                expected = observed;
+            float observed = chrCopyNumber_[index].getRatioAtBin(i);
+            if (observed!=NA) {
+                if (isRatioLogged_) {
+                    observed=pow(2,observed);
+                }
+                float expected = observed;
                 if (chrCopyNumber_[index].isMedianCalculated()) {
                     expected = chrCopyNumber_[index].getMedianProfileAtI(i);
                     if (chrCopyNumber_[index].isSmoothed())
                         expected = chrCopyNumber_[index].getSmoothedProfileAtI(i);
-                    }
+
                 }
-			observedvalues.push_back(observed);
-			expectedvalues.push_back(expected);
+                observedvalues.push_back(observed);
+                expectedvalues.push_back(expected);
+            }
 		}
 	}
 
@@ -1126,7 +1128,12 @@ long double GenomeCopyNumber::calculateRSS(int ploidy)
             RSS = RSS + (long double)pow(diff,2);
             }
         }
-    return RSS;
+    if (observedvalues.size()==0) {
+        return 0;
+    }
+    double normRSS = (RSS/observedvalues.size());
+    observedvalues.clear();expectedvalues.clear();
+    return normRSS;
 }
 
 
@@ -1223,7 +1230,35 @@ void GenomeCopyNumber::calculateRatioUsingCG_Regression( GenomeCopyNumber & cont
 	//XXX
 }
 
-int GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) {
+int GenomeCopyNumber::fillInRatio() {
+    vector <float> countValues;
+    vector<ChrCopyNumber>::iterator it;
+
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if ((sex_.compare("XY")==0) && (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+                //should take into account that normally one has only one copy of X and Y..
+                it->fillInRatio(isRatioLogged_);
+        } else {
+                it->fillInRatio(isRatioLogged_);
+                for (int i = 0; i< it->getLength(); i++) {
+                    if (it->getValueAt(i)>0) {
+                        countValues.push_back(it->getRatioAtBin(i));
+                    }
+                }
+        }
+    }
+    float median=get_medianNotNA(countValues);
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if (!isRatioLogged_) {
+                it->recalculateRatio(median);
+        } else {
+            it->recalculateLogRatio(median);
+        }
+    }
+    return 1;
+}
+
+int GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept) {
 
 
     int maximalNumberOfIterations = 300;
@@ -1232,7 +1267,7 @@ int GenomeCopyNumber::calculateRatio( GenomeCopyNumber & controlCopyNumber, int 
 
     int successfulFit = 0;
 
-	if(logLogNorm) {
+	if(isRatioLogged_) {
         intercept=1; degree=1;//because it is loglogscale
         vector <float> y; //y ~ a0x+a1
         vector <float> x;
@@ -2920,6 +2955,8 @@ void GenomeCopyNumber::printRatioBedGraph(std::string const& chr, std::ofstream 
 
     for (int i = 0; i< length; i++) {
             value=chrCopyNumber_[index].getRatioAtBin(i);
+            if (isRatioLogged_ && value!=NA)
+                value=pow(2,value);
             position=chrCopyNumber_[index].getCoordinateAtBin(i);
             float valueToPrint;
 			if (chrCopyNumber_[index].isSmoothed())
@@ -2962,8 +2999,12 @@ void GenomeCopyNumber::printRatio(std::string const& chr, std::ofstream & file, 
 	int length = chrCopyNumber_[index].getLength();
 	//cout <<length<<" == "<<chrCopyNumber_[index].getValues().size() <<"\n";
 	for (int i = 0; i< length; i++) {
-        if (printNA || chrCopyNumber_[index].getRatioAtBin(i)!=NA) {//process this this window
-                file << chrNumber <<"\t"<<chrCopyNumber_[index].getCoordinateAtBin(i)+1<<"\t"<<chrCopyNumber_[index].getRatioAtBin(i) ;
+        float ratioToPrint = chrCopyNumber_[index].getRatioAtBin(i);
+        if (isRatioLogged_ && ratioToPrint!= NA) {
+            ratioToPrint=pow(2,ratioToPrint);
+        }
+        if (printNA || ratioToPrint!=NA) {//process this this window
+                file << chrNumber <<"\t"<<chrCopyNumber_[index].getCoordinateAtBin(i)+1<<"\t"<<ratioToPrint ;
                 if (chrCopyNumber_[index].isMedianCalculated()) {
                     file << "\t"<<chrCopyNumber_[index].getMedianProfileAtI(i) ;
                     float valueToPrint;
@@ -3127,7 +3168,7 @@ void GenomeCopyNumber::calculateCopyNumberMedians (int minCNAlength, bool noisyD
 	vector<ChrCopyNumber>::iterator it;
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
         cout << "..calculating medians for " << it->getChromosome()<< "\n";
-		it->calculateCopyNumberMedian(ploidy_, minCNAlength, noisyData, CompleteGenomicsData);
+		it->calculateCopyNumberMedian(ploidy_, minCNAlength, noisyData, CompleteGenomicsData, isRatioLogged_);
 	}
 }
 
@@ -3186,6 +3227,8 @@ void GenomeCopyNumber::calculateSDAndMed(int ploidy, map <float,float> &sds,map 
 			med = it->getMedianProfileAtI(i);
 			float level = round_by_ploidy(med, ploidy);
 			value = it->getRatioAtBin(i);
+			if (isRatioLogged_&& value!=NA)
+                value=pow(2,value);
 			if (value != NA) {
 				if (mymap.count(level) == 0) {
 					vector <float> a;
@@ -3223,6 +3266,8 @@ void GenomeCopyNumber::calculateSDs(int ploidy, map <float,float> &sds) {
 			med = it->getMedianProfileAtI(i);
 			float level = round_by_ploidy(med, ploidy);
 			value = it->getRatioAtBin(i);
+			if (isRatioLogged_&& value!=NA)
+                value=pow(2,value);
 			if (value != NA) {
 				if (mymap.count(level) == 0) {
 					vector <float> a;
@@ -3267,6 +3312,8 @@ float GenomeCopyNumber::calculateVarianceForNormalCopy(int ploidy) { //geting th
 			med = it->getMedianProfileAtI(i);
 			if ((med>lowBoundary)&&(med < highBoundary)) {
 				value = it->getRatioAtBin(i);
+				if (isRatioLogged_&& value!=NA)
+                    value=pow(2,value);
 				if (value != NA) {
 					myfile << value-1 << "\n";
 					variance += (value-1)*(value-1);
@@ -3319,19 +3366,23 @@ float GenomeCopyNumber::evaluateContamination () {
 		int length = chrCopyNumber_[index].getLength();
 		for (int i = 0; i< length; i++) {
 			float observed = chrCopyNumber_[index].getRatioAtBin(i);
-			float expected = observed;
-			if (chrCopyNumber_[index].isMedianCalculated()) {
-				expected = chrCopyNumber_[index].getMedianProfileAtI(i) ;
-				if (chrCopyNumber_[index].isSmoothed() && WESanalysis == false)
-					expected = chrCopyNumber_[index].getSmoothedProfileAtI(i);
-			}
-			if (!(expected == 1 || expected <= 0 || expected >= 2 || observed > 3 || observed <= 0)
-                && (((1>observed)&&(1>expected))||((1<observed)&&(1<expected)))) {// should it be something related to ploidy_ and not 2
-				float p = (observed-expected)/(observed-expected+2/ploidy_*(1-observed));
-				if (p>-0.5 && p<1.5) {
-                    values.push_back(p);
-                    weights.push_back(chrCopyNumber_[index].getFragmentLengths_notNA_At(i));
-				}
+			if (observed!=NA) {
+                if(isRatioLogged_)
+                    observed=pow(2,observed);
+                float expected = observed;
+                if (chrCopyNumber_[index].isMedianCalculated()) {
+                    expected = chrCopyNumber_[index].getMedianProfileAtI(i) ;
+                    if (chrCopyNumber_[index].isSmoothed() && WESanalysis == false)
+                        expected = chrCopyNumber_[index].getSmoothedProfileAtI(i);
+                }
+                if (!(expected == 1 || expected <= 0 || expected >= 2 || observed > 3 || observed <= 0)
+                    && (((1>observed)&&(1>expected))||((1<observed)&&(1<expected)))) {// should it be something related to ploidy_ and not 2
+                    float p = (observed-expected)/(observed-expected+2/ploidy_*(1-observed));
+                    if (p>-0.5 && p<1.5) {
+                        values.push_back(p);
+                        weights.push_back(chrCopyNumber_[index].getFragmentLengths_notNA_At(i));
+                    }
+                }
 			}
 		}
 	}
@@ -3373,6 +3424,8 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
 		for (int i = 0; i< length; i++) {
 			float observed = chrCopyNumber_[index].getRatioAtBin(i);
 			if (observed!=NA) {
+                if (isRatioLogged_)
+                    observed=pow(2,observed);
                 float expected = observed;
                 if (chrCopyNumber_[index].isMedianCalculated()) {
                     expected = round_by_ploidy(chrCopyNumber_[index].getMedianProfileAtI(i),ploidy_) ;
@@ -4075,7 +4128,26 @@ int GenomeCopyNumber::processReadWithBowtie(std::string const& inputFormat, std:
 	}
 	return 0;
 }
+float GenomeCopyNumber::removeLargeExons(float iqrToKeep) {
+    float maxLength = 0;
+	vector<ChrCopyNumber>::iterator it;
+	int totalNumberExons=0;
+	float numberOfRemovedExons = 0;
+	vector <float> exonLengths;
 
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        for (int i=0; i < it->getLength(); i++) {
+            exonLengths.push_back(it->getEndAtBin(i)-it->getCoordinateAtBin(i));
+            totalNumberExons++;
+        }
+	}
+    maxLength=get_iqr(exonLengths)/2*iqrToKeep+get_median(exonLengths);
+
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        numberOfRemovedExons+=it->removeLargeExons(maxLength);
+	}
+	return numberOfRemovedExons/totalNumberExons;
+}
 int GenomeCopyNumber::focusOnCapture (std::string const& captureFile) {
 	ifstream file (captureFile.c_str());
 	string line;
@@ -4189,6 +4261,10 @@ bool GenomeCopyNumber::getWESanalysis()
 void GenomeCopyNumber::setWESanalysis(bool WESgiven)
 {
 WESanalysis = WESgiven;
+}
+
+void GenomeCopyNumber::setIfLogged(bool isRatioLogged) {
+    isRatioLogged_=isRatioLogged;
 }
 
 void GenomeCopyNumber::setmakingPileup(bool makingPileup_given)

@@ -104,6 +104,23 @@ float get_median(const std::vector<float> & myvector) {
   return median_value;
 }
 
+float get_medianNotNA(const std::vector<float> & myvector) {
+  vector<float> data (myvector);
+
+  data.erase(std::remove(data.begin(), data.end(), NA), data.end());
+
+  int ndatapoints = data.size();
+  if (ndatapoints==0) {
+    cerr << "Error: zero values to calculate medians..\n";
+    exit(-1);
+  }
+  sort(data.begin(),data.end());
+  // Get median
+  float median_value = ndatapoints % 2 == 1 ? data[(ndatapoints-1)/2] : (data[ndatapoints/2 - 1] + data[ndatapoints/2])/float(2.0);
+  data.clear();
+  return median_value;
+}
+
 // Calculate sd across individuals around given mean
 // ---------------------------------------------------------------------------
 float get_sd (const std::vector<float>& data, float mean) {
@@ -176,9 +193,14 @@ float get_weighted_mean(const std::vector<float>& data, const std::vector<float>
 
 // Calculate inter quartile range across individuals
 // ---------------------------------------------------------------------------
-float get_iqr(const std::vector<float>& data) {
+float get_iqr(const std::vector<float>& myvector) {
+  vector<float> data (myvector);
   int ndatapoints = data.size();
-
+  if (ndatapoints==0) {
+    cerr << "Error: zero values to calculate medians..\n";
+    exit(-1);
+  }
+  sort(data.begin(),data.end());
   // Get IQR
   float lower_quartile, upper_quartile;
 

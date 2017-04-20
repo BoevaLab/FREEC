@@ -67,6 +67,7 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 	isMedianCalculated_ = false;
 	isSmoothed_ = false;
 	ploidy_=NA;
+	float meanTargetRegionLength=0;
 	if (targetBed == "")     {
         if (windowSize ==0) {
             cerr << "Error: windowSize is set to Zero\n";
@@ -150,7 +151,7 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
 							oss.flush();
 							genes_names.push_back(oss.str());
 						}
-
+                        meanTargetRegionLength+=atoi(endstr.c_str())-atoi(start.c_str());
 						++length_;
 
 					}
@@ -162,10 +163,14 @@ ChrCopyNumber::ChrCopyNumber(int windowSize, int chrLength, std::string const& c
             }
 
             exons_Countchr_ = length_;
-
+            meanTargetRegionLength/=length_;
 			readCount_ = vector<float>(exons_Countchr_,0);
 
 			cout << "Number of exons analysed in chromosome "<< chromosome_ << " : " << exons_Countchr_ << "\n";
+            cout << "Average exon length in chromosome "<< chromosome_ << " : " << meanTargetRegionLength << "\n";
+            if (meanTargetRegionLength <30) {
+                cerr << "WARNING: check your file with targeted regions: the average length of targeted regions is unexpectedly short\n";
+            }
 
         }else {
 			std::cerr << "Failed to open " << captureFile << "\n";
@@ -415,6 +420,23 @@ void ChrCopyNumber::removeLowReadCountWindows(const int RCThresh) {
     }
 }
 
+void ChrCopyNumber::fillInRatio(bool islog) {
+    if ((int)ratio_.size()!=length_)
+		ratio_.resize(length_);
+
+    for (int i = 0; i<length_; i++) {
+        if (readCount_[i]>=0 && !(mappabilityProfile_.size() > 0 && mappabilityProfile_[i] <= minMappabilityPerWindow)) {
+            if (islog) {
+                ratio_[i] = log(readCount_[i]+1)/log(2.0);
+            }else {
+                ratio_[i] = readCount_[i];
+            }
+        } else {
+            ratio_[i] = NA;
+        }
+    }
+}
+
 void ChrCopyNumber::calculateRatioLog(ChrCopyNumber control, const double * a, const int degree){
 	if ((int)ratio_.size()!=length_)
 		ratio_.resize(length_);
@@ -623,15 +645,36 @@ void ChrCopyNumber::recalculateRatio (float constant) {
 			ratio_[i] /= constant;
 }
 
-void ChrCopyNumber::recalculateRatioWithContam (float contamination, float normGenytype) { //normGenytype==1 if AB, normGenytype==0.5 if A
+void ChrCopyNumber::recalculateLogRatio (float constant) {
 	for (int i = 0; i<length_; i++)
-		if (ratio_[i] != NA) {
+		if (ratio_[i] != NA)
+			ratio_[i] -= constant;
+}
+
+void ChrCopyNumber::recalculateRatioWithContam (float contamination, float normGenytype, bool isLogged) { //normGenytype==1 if AB, normGenytype==0.5 if A
+	if (!isLogged) {
+        for (int i = 0; i<length_; i++)
+            if (ratio_[i] != NA) {
 			//ratio_[i] = (ratio_[i]-contamination*normGenytype)/(1-contamination); //correct only for ploidy 2
-            ratio_[i] = (ratio_[i]*(1-contamination+2*contamination/ploidy_) -contamination*normGenytype/ploidy_*2)/(1-contamination);
+                ratio_[i] = (ratio_[i]*(1-contamination+2*contamination/ploidy_) -contamination*normGenytype/ploidy_*2)/(1-contamination);
 
 			if (ratio_[i]<0)
 				ratio_[i] = 0;
 		}
+    } else {
+        for (int i = 0; i<length_; i++)
+            if (ratio_[i] != NA) {
+                float realCopy = pow(2,ratio_[i]);
+                ratio_[i] = (realCopy*(1-contamination+2*contamination/ploidy_) -contamination*normGenytype/ploidy_*2)/(1-contamination);
+                if (ratio_[i]<0)
+                    ratio_[i] = NA;
+                else {
+                    ratio_[i]=log2(ratio_[i]);
+                }
+
+		}
+
+    }
 }
 
 
@@ -659,7 +702,7 @@ int ChrCopyNumber::getCoveredPart(int breakPointStart, int breakPointEnd) { //fo
     return lengthCovered;
 }
 
-void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool noisyData,  bool CompleteGenomicsData){ //create median profiles using 'bpfinal_' and store them in medianProfile_, info about medians themselves is stored in medianValues_ and about SD in sd_, lengths of fragments in bpLengths_
+void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool noisyData,  bool CompleteGenomicsData, bool isLogged){ //create median profiles using 'bpfinal_' and store them in medianProfile_, info about medians themselves is stored in medianValues_ and about SD in sd_, lengths of fragments in bpLengths_
 	if (ploidy!=ploidy_) {
         cerr << "..Warning: in calculateCopyNumberMedian() class's ploidy is different from "<<ploidy<<"\n";
         ploidy_=ploidy;
@@ -733,8 +776,11 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
 
         bool ifHomoz = false;
         float locMedian=NA;
-        if (int(data.size())>=minCNAlength && data.size()>0)
+        if (int(data.size())>=minCNAlength && data.size()>0) {
             locMedian = get_median(data); //including the last point
+            if (isLogged)
+                locMedian=pow(2, locMedian);
+        }
         if (isBAFpresent && notNA > 100 && locMedian < 1 && noisyData ) {
             vector<string>heteroValuesPerWindowStrings = split(BAFValuesInTheSegment, ';');
             int numberofBAFpoints =heteroValuesPerWindowStrings.size();
@@ -768,6 +814,8 @@ void ChrCopyNumber::calculateCopyNumberMedian(int ploidy, int minCNAlength, bool
 				}
 			} else {
 				median = get_median(data); //including the last point
+				if (isLogged)
+                    median=pow(2, median);
 				if (isBAFpresent) {
 //                    if (dataBAF.size()>0)
 //                        medianBAF = get_median(dataBAF);
@@ -1207,6 +1255,18 @@ void ChrCopyNumber::deleteFlanks(int telo_centromeric_flanks) {
 	if ((medianValues_[medianValues_.size()-1]!=NA)&&(fragmentNotNA_lengths_[medianValues_.size()-1]<=maxRegionLengthToDelete))
 				deleteFragment(medianValues_.size()-1);
 
+}
+
+
+int ChrCopyNumber::removeLargeExons(float threshold) {
+    int howManyRemoved = 0;
+    for (int i =0; i< length_; i++) {
+        if (ends_[i]-coordinates_[i]>threshold) {
+            howManyRemoved++;
+            readCount_[i]=NA;
+        }
+    }
+    return howManyRemoved;
 }
 
 void ChrCopyNumber::recalcFlanks(int telo_centromeric_flanks, int minNumberOfWindows) {

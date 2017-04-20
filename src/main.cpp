@@ -400,16 +400,22 @@ int main(int argc, char *argv[])
 
     std::string targetBed = std::string(cf.Value("target","captureRegions",""));
     bool logLogNorm = false;
+    logLogNorm =bool(cf.Value("general","logLogNorm",logLogNorm)) ;
+    bool normalization = bool(cf.Value("general","normalization",true));
+
     //if (ifTargeted)logLogNorm=true;
     if (ifTargeted && !isControlIsPresent) {
-        cerr << "ERROR: Currently you need to provide a control sample ('mateFile' or 'mateCopyNumberFile') when you analyze targeted sequencing data to eliminate capture bias. The GC-content bias is not the only bias in targeted sequencing\n";
-        exit(0);
+        cerr << "WARNING: You did not provide a control sample ('mateFile' or 'mateCopyNumberFile') but you are working with targeted sequencing data that has a capture bias.\n";
+        cerr << "WARNING: Will proceed without any normalization (on your own risk)!!\n";
+        cout << "Copy number profiles will be analysed in the log scale.\n";
+
+        logLogNorm=true;
+        normalization=false;
     }
     if (!has_window && ifTargeted) {
         cerr << "..will use window size equal to the length of each exon\n";
         window=0; step = 0;
     }
-    logLogNorm =bool(cf.Value("general","logLogNorm",logLogNorm)) ;
     //if (ifTargeted && !logLogNorm) {
     //    cerr << "Warning: I would recommend using logLogNorm=TRUE when working with targeted sequencing data\n";
     //}
@@ -424,7 +430,11 @@ int main(int argc, char *argv[])
 
     int intercept;
     bool isUseGC = false;
-    if (!isControlIsPresent || has_BAF || forceGC) {
+    if (!normalization) {
+        cout <<"..FREEC will not normalize data at all; will perform segmentation of read counts in log2(x+1) space.\n";
+        logLogNorm=true;
+        forceGC=0;
+    } else if (!isControlIsPresent || has_BAF || forceGC) {
             if (!has_dirWithFastaSeq && !has_GCprofile) {
                 cerr << "Error: with the current options, either 'chrFiles' or 'GCcontentProfile' must be set\n";
                 exit(0);
@@ -472,18 +482,18 @@ int main(int argc, char *argv[])
     } else {
         if (intercept==1 && !(!has_BAF&&isControlIsPresent)) {
             std::cout << "..Polynomial degree for \"ReadCount ~ GC-content\" normalization is 3 or 4: will try both\n";
-        } else if (!(ifTargeted && forceGC==1)) {
+        } else if (!(ifTargeted && forceGC==1)&&normalization) {
             degree=1;
             std::cout << "..Polynomial degree for \"Sample ReadCount ~ Control ReadCount\" normalization is "<< degree<< "\n";
         }
     }
 
     int defaltminCNA=1;
-    if (ifTargeted)defaltminCNA=3;
+    if (ifTargeted) defaltminCNA=3;
 	int minCNAlength = (int)cf.Value("general","minCNAlength", defaltminCNA);
 	cout << "..Minimal CNA length (in windows) is "<< minCNAlength<< "\n";
 
-    if (!ifTargeted && logLogNorm && isUseGC) {
+    if (!ifTargeted && logLogNorm && isUseGC &&normalization) {
         cerr << "Warning: will not use loglog-normalization since GC-content will be used\n";
         logLogNorm=false;
     }
@@ -638,8 +648,9 @@ int main(int argc, char *argv[])
     }
 
     if (WESanalysis == true && isControlIsPresent == false)       {
-        cerr << "ERROR : For WES, FREEC does not use GC content for normalization (as it will only add more noise). Thus, for WES data analysis, you MUST provide a control file! \n";
-        exit(0);
+        cerr << "Warning : You did not provide a control sample for WES data. No normalization will be applied to read counts! \n";
+        normalization=false;
+        logLogNorm=true;
     }
 
     if (ifTargeted==true && window!=0) {
@@ -664,12 +675,14 @@ int main(int argc, char *argv[])
 	sampleCopyNumber.setWESanalysis(WESanalysis);
 	sampleCopyNumber.setmakingPileup(makingPileup);
 
+    sampleCopyNumber.setIfLogged(logLogNorm);
 
 	GenomeCopyNumber controlCopyNumber;
 	controlCopyNumber.setSamtools(pathToSamtools);
 	controlCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
 	controlCopyNumber.setWESanalysis(WESanalysis);
 	controlCopyNumber.setmakingPileup(makingPileup);
+    controlCopyNumber.setIfLogged(logLogNorm);
 
 	SNPinGenome snpingenome;
 	snpingenome.setWESanalysis(WESanalysis);
@@ -841,10 +854,16 @@ int main(int argc, char *argv[])
         controlCopyNumber.focusOnCapture(targetBed);
 	}
 
+    if (normalization==false) {
+        float iqrLargeExon=1;
+        cout << "Warning: removed " <<sampleCopyNumber.removeLargeExons(iqrLargeExon)<< "% of exons as too large\n";
+        cout << "To avoid it, provide a file with captured targets and not with exons (an exon can be covered by several capture targets)\n";
+    }
+
     //If GC profile for exome is needed
     //sampleCopyNumber.fillCGprofile(dirWithFastaSeq);
 
-    if (!has_GCprofile || GCprofileFile=="") {
+    if ((!has_GCprofile || GCprofileFile=="")&&normalization) {
         if (sampleCopyNumber.getWindowSize()==0)
             GCprofileFile = outputDir+"GC_profile.targetedRegions.cnp";
         else {
@@ -933,7 +952,7 @@ int main(int argc, char *argv[])
         isSuccessfulFit = runWithDefinedPloidy(ploidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,
-        makePileup,seekSubclones,myName,unexplainedChromosomes, CompleteGenomicsData);
+        makePileup,seekSubclones,myName,unexplainedChromosomes, CompleteGenomicsData,normalization);
 
     }
 
@@ -969,7 +988,7 @@ int main(int argc, char *argv[])
         isSuccessfulFit=runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
         degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
         teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,makePileup,seekSubclones,
-         myName,unexplainedChromosomes, CompleteGenomicsData);
+         myName,unexplainedChromosomes, CompleteGenomicsData,normalization);
     }
 
     double breakPointThreshold_BAF=1;
@@ -1061,73 +1080,81 @@ int runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genome
         bool has_BAF,bool ifTargeted,bool WESanalysis,
         int degree,int intercept,bool logLogNorm,float minExpectedGC,float maxExpectedGC,float knownContamination,float breakPointThreshold,int breakPointType,int minCNAlength,
         int teloCentroFlanks, vector<double> & RSS, vector<double> &percentage_GenExpl,bool contaminationAdjustment,vector<double> &contamination, ThreadPool * thrPool,
-        ThreadPoolManager * thrPoolManager, string makePileup, float seekSubclones, std::string myName, vector<int> &unexplainedChromosomes, bool CompleteGenomicsData) {
+        ThreadPoolManager * thrPoolManager, string makePileup, float seekSubclones, std::string myName, vector<int> &unexplainedChromosomes, bool CompleteGenomicsData,
+        bool normalization) {
         //NORMALIZE READ COUNT:
         sampleCopyNumber.setPloidy(ploidy);
         sampleCopyNumber.setNormalContamination(knownContamination);
 
         int successfulFit = 1;
 
-        if (isControlIsPresent) {
-            if (((!forceGC) && (!has_BAF)) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0)) { //normalize sample density with control density
-                successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
-            } else { //forceGC != 0
-                if (forceGC==1) { //normalize first Sample and Control, and then calculate the ratio
+        if (normalization) {
+            if (isControlIsPresent) {
+                if (((!forceGC) && (!has_BAF)) || (ifTargeted&&forceGC!=1) || (WESanalysis == true &&forceGC==0)) { //normalize sample density with control density
+                    successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept);
+                } else { //forceGC != 0
+                    if (forceGC==1) { //normalize first Sample and Control, and then calculate the ratio
+                        if (degree==NA) {
+                            successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                            if (controlCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC)==0)
+                                successfulFit = 0;
+                        }
+                        else {
+                            successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                            if (controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
+                                successfulFit = 0;
+                        }
+                        sampleCopyNumber.calculateRatioUsingCG(controlCopyNumber);
+                        //sampleCopyNumber.calculateRatioUsingCG_Regression(controlCopyNumber);
+                    } else if (forceGC==2) {  //calculate the ratio , normalize for GC
+                        successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept);
+                        sampleCopyNumber.recalculateRatioUsingCG(8, 1,minExpectedGC,maxExpectedGC); //try higher values of polynomial's degree
+                    }
+                }
+                if(has_BAF && forceGC!=1 && !ifTargeted && WESanalysis == false) { //calculateRatioUsingCG
+                    if (intercept != 1) cerr << "Warning: Again, I would advise using 'intercept = 1' with your parameters\n";
+
+                    if (forceGC==0) { //otherwise, already calculated for the Sample
+                        if (degree==NA) {
+                            successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+                        }
+                        else {
+                           successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
+                        }
+                    }
+
                     if (degree==NA) {
-                        successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
-                        if (controlCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC)==0)
+                        if(controlCopyNumber.calculateRatioUsingCG(intercept,minExpectedGC,maxExpectedGC)==0)
                             successfulFit = 0;
                     }
                     else {
-                        successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
-                        if (controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
+                        if(controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
                             successfulFit = 0;
                     }
-                    sampleCopyNumber.calculateRatioUsingCG(controlCopyNumber);
-                    //sampleCopyNumber.calculateRatioUsingCG_Regression(controlCopyNumber);
-                } else if (forceGC==2) {  //calculate the ratio , normalize for GC
-                    successfulFit = sampleCopyNumber.calculateRatio(controlCopyNumber, degree,intercept,logLogNorm);
-                    sampleCopyNumber.recalculateRatioUsingCG(8, 1,minExpectedGC,maxExpectedGC); //try higher values of polynomial's degree
-                }
-            }
-            if(has_BAF && forceGC!=1 && !ifTargeted && WESanalysis == false) { //calculateRatioUsingCG
-                if (intercept != 1) cerr << "Warning: Again, I would advise using 'intercept = 1' with your parameters\n";
 
-                if (forceGC==0) { //otherwise, already calculated for the Sample
-                    if (degree==NA) {
-                        successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
-                    }
-                    else {
-                       successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
-                    }
+                }
+                if (ifTargeted && (has_BAF) && forceGC!=1) {
+                    cout << "Warning: Control-FREEC will assume that there is not gains and losses in the target regions in the control genome\n";
+                    cout << "..Set copy number in the control genome equal to "<< 2 << "\n";
+                    controlCopyNumber.setAllNormal();
                 }
 
+            } else { // no Control present
                 if (degree==NA) {
-                    if(controlCopyNumber.calculateRatioUsingCG(intercept,minExpectedGC,maxExpectedGC)==0)
-                        successfulFit = 0;
+                    successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
+
                 }
                 else {
-                    if(controlCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC)==0)
-                        successfulFit = 0;
+                    successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
                 }
+            }
+            cout << "..Copy number profile normalization -> done\n";
 
-            }
-            if (ifTargeted && (has_BAF) && forceGC!=1) {
-                cout << "Warning: Control-FREEC will assume that there is not gains and losses in the target regions in the control genome\n";
-                cout << "..Set copy number in the control genome equal to "<< 2 << "\n";
-                controlCopyNumber.setAllNormal();
-            }
-
-        } else { // no Control present
-            if (degree==NA) {
-                successfulFit = sampleCopyNumber.calculateRatioUsingCG( intercept,minExpectedGC,maxExpectedGC);
-
-            }
-            else {
-                successfulFit = sampleCopyNumber.calculateRatioUsingCG(degree, intercept,minExpectedGC,maxExpectedGC);
-            }
+        } else { //does not need to normalize the data:
+            sampleCopyNumber.fillInRatio();
+            cout << "..Filled in read counts -> done\n";
         }
-        cout << "..Copy number profile normalization -> done\n";
+
     //segmentation:
         if (knownContamination>0) {
             cout << "..Recalculating copy number profiles using known value of contamination by normal cells:\n";
