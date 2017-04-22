@@ -387,15 +387,18 @@ int main(int argc, char *argv[])
         cout << "..since you mateFile is not in SAMtools pileup format, the BAF values will not be calculated\n";
         has_BAF=false;
 	}
-    string SNPinfoFile = std::string(cf.Value("BAF","SNPfile",""));
 
-    if (makePileup != "false" && SNPinfoFile=="") {
-        if (makePileup.substr(makePileup.size()-3,3)=="vcf" || makePileup.substr(makePileup.size()-6,6)=="vcf.gz") {
-            SNPinfoFile=makePileup;
-        } else {
-            cerr << "Warning: you have to provide a filename with the \"SNPfile\" option if you wish to calculate BAF profiles\n";
-            cerr << "SNPfile can be in .txt, .txt.gz, .vcf. or .vcf.gz format\n";
-        }
+    string SNPinfoFile = std::string(cf.Value("BAF","SNPfile",""));
+    if (SNPinfoFile == "" && makePileup != "false") {
+        SNPinfoFile = makePileup;
+    }
+    if (SNPinfoFile != ""
+        && SNPinfoFile.substr(SNPinfoFile.size() - 3, 3) != "vcf"
+        && SNPinfoFile.substr(SNPinfoFile.size() - 6, 6) != "vcf.gz"
+        && SNPinfoFile.substr(SNPinfoFile.size() - 3, 3) != "txt"
+        && SNPinfoFile.substr(SNPinfoFile.size() - 6, 6) != "txt.gz") {
+        cerr << "Warning: you have to provide a filename with the \"SNPfile\" or \"makePileup\" option if you wish to calculate BAF profiles\n";
+        cerr << "SNPfile can be in .txt, .txt.gz, .vcf. or .vcf.gz format\n";
     }
 
     std::string targetBed = std::string(cf.Value("target","captureRegions",""));
