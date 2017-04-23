@@ -35,13 +35,15 @@ public:
     int processRead(InputFormat inputFormat, MateOrientation matesOrientation, const char* line_buffer,  int& prevInd, std::string targetBed = "", std::string mateFileName = "");
 	int processReadWithBowtie(std::string const& inputFormat, std::string const& matesOrientation,std::string const line,std::string const line2);
     int focusOnCapture (std::string const& captureFile);
+    float removeLargeExons(float iqrToKeep);
 	void initCopyNumber(std::string const& chrLenFileName, int windowSize , int step, std::string targetBed);
 	void finishCopyNumber(long normalCount);
     void addBAFinfo(SNPinGenome & snpingenome);
     void removeLowReadCountWindows(GenomeCopyNumber & controlCopyNumber, int RCThresh);
     void removeLowReadCountWindowsFromControl (int RCThresh);
 
-	int calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept,bool logLogNorm) ;
+    int fillInRatio();
+	int calculateRatio( GenomeCopyNumber & controlCopyNumber, int degree, bool intercept) ;
     void calculateRatioUsingCG( GenomeCopyNumber & controlCopyNumber) ;
     void calculateRatioUsingCG_Regression( GenomeCopyNumber & controlCopyNumber) ;
 	float calculateNormalizationConstant(GenomeCopyNumber & controlCopyNumber);
@@ -123,7 +125,9 @@ public:
 
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
-     void setmakingPileup(bool makingPileup_given);
+    void setmakingPileup(bool makingPileup_given);
+    void setIfLogged(bool);
+
     double Percentage_GenomeExplained(int &);
     long double calculateRSS(int ploidy);
     bool isMappUsed();
@@ -136,6 +140,8 @@ private:
     bool makingPileup;
     bool SeekingSubc_;
     bool isMappUsed_;
+    bool isRatioLogged_;
+
 	void fillMyHash(std::string const& mateFileName , std::string const& inputFormat, std::string const& matesOrientation, int windowSize, int step, std::string targetBed = "");
 	int windowSize_;
 	int step_;

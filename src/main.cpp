@@ -352,44 +352,52 @@ int main(int argc, char *argv[])
 	bool is_sample_pileup = (sample_inputFormat.compare("pileup") == 0 || sample_inputFormat.compare("SAMtools pileup") == 0);
 	bool is_control_pileup = (control_inputFormat.compare("pileup") == 0 || control_inputFormat.compare("SAMtools pileup") == 0);
 
-
 	bool has_BAF = cf.hasValue("BAF","SNPfile");
     std::string makePileup = (std::string)cf.Value("BAF","makePileup", "false");
     std::string fastaFile = (std::string)cf.Value("BAF","fastaFile", "false");
+    std::string miniPileupFileSample = (std::string)cf.Value("sample","miniPileup", "false");
+    std::string miniPileupFileControl = (std::string)cf.Value("sample","miniPileup", "false");
 
-    if (makePileup != "false" && fastaFile=="false") {
+	bool isHasMiniPileUPsample = (miniPileupFileSample=="false")?0:1;
+    bool isHasMiniPileUPcontrol = (miniPileupFileControl=="false")?0:1;
+
+    if (makePileup != "false" && fastaFile=="false" && (!isHasMiniPileUPsample || isControlIsPresent && !isHasMiniPileUPcontrol)) {
         cerr << "To create a usable .pileup file from .BAM you need to provide a fasta file for the whole genome with option \"fastaFile\""<<endl;
         cerr << "If you only want copy number profiles (no genotypes), then remove or comment all the lines in the group of parameters [BAF]"<<endl;
 
         exit(0);
     }
 
-    if (makePileup != "false")
+    if (isHasMiniPileUPsample) {
+        has_BAF = false;
+    }
+
+    if (makePileup != "false" && ((!isControlIsPresent)&&(!isHasMiniPileUPsample) || isControlIsPresent&&(!isHasMiniPileUPcontrol||miniPileupFileSample=="false" )))
         {
         cout << "FREEC will create a pileup to compute BAF profile! \n";
         cout << "...File with SNPs : " << makePileup << "\n";
         has_BAF = false;
         }
 
-	if (has_BAF && makePileup == "false" && !has_sample_MateFile) {
+	if (has_BAF && makePileup == "false" && !has_sample_MateFile && !isHasMiniPileUPsample) {
         cerr << "ERROR: you need to provide a 'mateFile' for the [sample] (in SAMtools pileup format) to be able to calculate BAF profiles with options [BAF] or to provide a BED/VCF file with SNP positions (option \"makePileup\")\n";
         exit (0);
 	}
 
-    if (has_BAF && !has_control_MateFile && isControlIsPresent && makePileup == "false") {
+    if (has_BAF && !has_control_MateFile && isControlIsPresent && makePileup == "false" && !isHasMiniPileUPcontrol) {
         cerr << "ERROR: you need to provide a 'mateFile' for the [control] (in SAMtools pileup format) to be able to calculate BAF profiles with options [BAF] and detect somatic CNAs and LOH\n";
         cerr << "..Otherwise, you may not to use the control data at all. Just comment or delete 'mateCopyNumberFile' in the [control] group of parameters\n";
         exit (0);
 	}
 
-	if (!is_sample_pileup && has_BAF && makePileup == "false") {
+	if (!is_sample_pileup && has_BAF && makePileup == "false" && !isHasMiniPileUPsample) {
         cerr << "Error: to calculate BAF values, you need to provide mateFile in SAMtools pileup format\n Or you can set 'makePileup' parameter true by providing a path to a VCF file with SNP positions\n";
         cout << "..since you mateFile is not in SAMtools pileup format, the BAF values will not be calculated\n";
         has_BAF=false;
 	}
     string SNPinfoFile = std::string(cf.Value("BAF","SNPfile",""));
 
-    if (makePileup != "false" && SNPinfoFile=="") {
+    if (makePileup != "false" && SNPinfoFile=="" || isHasMiniPileUPsample&& SNPinfoFile=="") {
         if (makePileup.substr(makePileup.size()-3,3)=="vcf" || makePileup.substr(makePileup.size()-6,6)=="vcf.gz") {
             SNPinfoFile=makePileup;
         } else {
@@ -574,9 +582,10 @@ int main(int argc, char *argv[])
     cout << "..break-point type set to "<<breakPointType<<"\n";
 
     bool noisyData = (bool)cf.Value("general","noisyData", "false");
+
     if ((!noisyData) && ifTargeted && has_BAF) {
         cout << "Warning: consider using '[general] noisyData=true' if you expect to have highly nonuniform coverage along the genome\n";
-    } else if (noisyData && !has_BAF && makePileup=="false"){
+    } else if (noisyData && !has_BAF && makePileup=="false" && !isHasMiniPileUPsample){
         cout << "Warning: Parameter '[general] noisyData=true' will not have effect since FREEC won't use BAF information to correct predicted copy numbers\n";
     }else if (noisyData &&  !ifTargeted ){
         cout << "Warning: I would not recommend using '[general] noisyData=true' for whole genome data; you can miss some real CNAs in this case\n";
@@ -701,19 +710,30 @@ int main(int argc, char *argv[])
     string controlPileup;
     string samplePileup;
 
-    if (makePileup != "false")  {
-            cout << "Creating Pileup file to compute BAF profile...\n";
-            minipileup.makepileup(sampleCopyNumber, controlCopyNumber, sample_MateFile, control_MateFile, myName, makePileup, sample_MateFile,
-            sample_inputFormat, sample_mateOrientation, pathToSamtools, pathToSambamba, SambambaThreads, chrLenFile, controlName, targetBed, pathToBedtools, fastaFile, minimalQualityPerPosition);
-            cout << "... -> Done!\n";
+    if (makePileup != "false" || isHasMiniPileUPcontrol || isHasMiniPileUPsample)  {
+            if (!isHasMiniPileUPsample || (isControlIsPresent && !isHasMiniPileUPcontrol)) {
+                cout << "Creating Pileup file to compute BAF profile...\n";
+                minipileup.makepileup(sampleCopyNumber, controlCopyNumber, sample_MateFile, control_MateFile, myName, makePileup, sample_MateFile,
+                sample_inputFormat, sample_mateOrientation, pathToSamtools, pathToSambamba, SambambaThreads, chrLenFile, controlName, targetBed, pathToBedtools, fastaFile, minimalQualityPerPosition);
+                cout << "... -> Done!\n";
+            }
+
             GenomeCopyNumberReadMateFileArgWrapper* readMateFileArg;
             cout << "..will use SNP positions from "<< SNPinfoFile << " to calculate BAF profiles\n";
 
             thrPool = thrPoolManager->newThreadPool("GenomeCopyNumber_readMateFile");
             snpingenome.readSNPs(SNPinfoFile);
 
-            controlPileup = controlName + "_minipileup" +".pileup";
-            samplePileup = myName + "_minipileup" +".pileup";
+            if (!isHasMiniPileUPsample || (isControlIsPresent && !isHasMiniPileUPcontrol)) {
+                controlPileup = controlName + "_minipileup" +".pileup";
+                samplePileup = myName + "_minipileup" +".pileup";
+            }
+            if (isHasMiniPileUPsample) {
+                samplePileup = miniPileupFileSample;
+            }
+            if (isControlIsPresent && isHasMiniPileUPcontrol) {
+                controlPileup = miniPileupFileControl;
+            }
 
             if (is_sample_pileup && !has_sample_mateCopyNumberFile && has_window)
                 {
@@ -992,7 +1012,7 @@ int main(int argc, char *argv[])
     }
 
     double breakPointThreshold_BAF=1;
-	if (has_BAF || makePileup != "false") {
+	if (has_BAF || makePileup != "false" || isHasMiniPileUPsample) {
         breakPointThreshold_BAF = 0.8;
         if (ifTargeted)
             breakPointThreshold_BAF = 1.6;
@@ -1004,7 +1024,7 @@ int main(int argc, char *argv[])
 
         SNPinGenomePerformArgWrapper* snpArg;
 
-        if (makePileup == "false")
+        if (makePileup == "false" && !isHasMiniPileUPsample)
             {
             snpArg = new SNPinGenomePerformArgWrapper(snpingenome, sample_MateFile, sample_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData,CompleteGenomicsData,sampleCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Sample");
             thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
@@ -1016,15 +1036,15 @@ int main(int argc, char *argv[])
             }
         //the same for the control sample:
         if (isControlIsPresent) {
-            if (makePileup == "false")
+            if (makePileup == "false" && !isHasMiniPileUPcontrol)
                 {
                 snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile, control_inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, CompleteGenomicsData,controlCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Control");
                 thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
                 }
             else
-                {
-                //snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, control_MateFile,"pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, controlCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Control");
-                //thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
+                {// the two lines below were commented for some unknown reason..
+                snpArg = new SNPinGenomePerformArgWrapper(snpingenomeControl, controlPileup,"pileup", minimalTotalLetterCountPerPosition,minimalQualityPerPosition, noisyData, CompleteGenomicsData, controlCopyNumber, breakPointThreshold_BAF, breakPointType, minCNAlength, "Control");
+                thrPool->addThread(SNPinGenome_perform_wrapper, snpArg);
                 }
 		}
 

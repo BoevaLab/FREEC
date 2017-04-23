@@ -70,7 +70,7 @@ int runWithDefinedPloidy(int ploidy, GenomeCopyNumber & sampleCopyNumber, Genome
         int degree,int intercept,bool logLogNorm,float minExpectedGC,float maxExpectedGC,float knownContamination,float breakPointThreshold,int breakPointType,int minCNAlength,
         int teloCentroFlanks, std::vector<double> & RSS, std::vector<double> &percentage_GenExpl,bool contaminationAdjustment,std::vector<double> &contamination,
         ThreadPool * thrPool,ThreadPoolManager * thrPoolManager,std::string makePileup, float seekSubclones,
-         std::string myName,std::vector<int> &unexplainedChromosomes, bool CompleteGenomicsData) ;
+         std::string myName,std::vector<int> &unexplainedChromosomes, bool CompleteGenomicsData,bool normalization) ;
 
 
 #endif //SVFINDER_H

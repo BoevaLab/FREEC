@@ -77,6 +77,7 @@ char* getLine(char* buffer, int buffer_size, FILE* stream, std::string& line);
 float get_sd (const std::vector<float>& data, float mean);
 float get_median(const std::vector<float>& data) ;
 float get_median(const std::vector<float>& data, int start, int end) ;
+float get_medianNotNA(const std::vector<float> & myvector) ;
 float get_mean(const std::vector<float>& data) ;
 float get_weighted_mean(const std::vector<float>& data, const std::vector<float>& weights) ;
 float get_sum(const std::vector<float>& data) ;

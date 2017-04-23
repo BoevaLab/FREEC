@@ -27,9 +27,11 @@ public:
 
 	void addBAFinfo(SNPinGenome & snpingenome,int indexSNP);
 
+	void fillInRatio(bool islog);
 	void calculateRatio(ChrCopyNumber control, float normalizationConst) ;
 	void recalculateRatio (float constant);
-	void recalculateRatioWithContam(float contamination, float normGenytype);
+	void recalculateLogRatio (float constant) ;
+	void recalculateRatioWithContam(float contamination, float normGenytype, bool isLogged);
     void recalculateRatio(ChrCopyNumber control);
 	void calculateRatio(ChrCopyNumber control, double a0, double a1);
 	void calculateRatio(ChrCopyNumber control, const double * a, const int degree);
@@ -39,7 +41,7 @@ public:
 	double calculateXiSum(int ploidy, std::map <float,float> &sds, std::map <float,float> &meds);
 	double calculateXiSum(int ploidy, std::map <float,float> &sds);
 	void calculateCopyNumberMedian(); //create median profiles using 'bpfinal_' and store them in medianProfile_, info about medians themselves is stored in medianValues_ and about SD in sd_, lengths of fragments in bpLengths_
-	void calculateCopyNumberMedian(int ploidy, int minCNAlength, bool noisyData, bool CompleteGenomicsData); //create median profiles as calculateCopyNumberMedian(), but merges close regions (roundByPloidy(median))
+	void calculateCopyNumberMedian(int ploidy, int minCNAlength, bool noisyData, bool CompleteGenomicsData, bool isLogged); //create median profiles as calculateCopyNumberMedian(), but merges close regions (roundByPloidy(median))
     void recalcFlanksForIndeces (int i, int j);
     void recalcFlanks(int telo_centromeric_flanks, int minNumberOfWindows); //merge short notNA-segments around NA-segments
 
@@ -52,7 +54,7 @@ public:
 
 	void deleteFlanks(int telo_centromeric_flanks);
 	void deleteFragment(int i) ;
-
+    int removeLargeExons(float threshold);
 
     std::string getGeneNameAtBin(int i);
 	float		getValueAt(int i);

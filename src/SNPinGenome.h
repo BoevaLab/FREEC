@@ -66,7 +66,7 @@ struct SNPinGenomePerformArgWrapper : public ThreadArg {
   int minCNAlength;
   const char* what;
 
-  SNPinGenomePerformArgWrapper(SNPinGenome& snpingenome, std::string const& mateFile, const std::string& inputFormat, int minimalTotalLetterCountPerPosition, int minimalQualityPerPosition, bool noisyData, bool CompleteGenomicsData, GenomeCopyNumber& genomeCopyNumber, double breakPointThreshold, int breakPointType, int minCNAlength, const char* what) : snpingenome(snpingenome), mateFile(mateFile), inputFormat(inputFormat), minimalTotalLetterCountPerPosition(minimalTotalLetterCountPerPosition), minimalQualityPerPosition(minimalQualityPerPosition), noisyData(noisyData),genomeCopyNumber(genomeCopyNumber), breakPointThreshold(breakPointThreshold), breakPointType(breakPointType), minCNAlength(minCNAlength), what(what) { }
+  SNPinGenomePerformArgWrapper(SNPinGenome& snpingenome, std::string const& mateFile, const std::string& inputFormat, int minimalTotalLetterCountPerPosition, int minimalQualityPerPosition, bool noisyData, bool CompleteGenomicsData, GenomeCopyNumber& genomeCopyNumber, double breakPointThreshold, int breakPointType, int minCNAlength, const char* what) : snpingenome(snpingenome), mateFile(mateFile), inputFormat(inputFormat), minimalTotalLetterCountPerPosition(minimalTotalLetterCountPerPosition), minimalQualityPerPosition(minimalQualityPerPosition), noisyData(noisyData),CompleteGenomicsData(CompleteGenomicsData),genomeCopyNumber(genomeCopyNumber), breakPointThreshold(breakPointThreshold), breakPointType(breakPointType), minCNAlength(minCNAlength), what(what) { }
 };
 
 extern void* SNPinGenome_perform_wrapper(void *arg);

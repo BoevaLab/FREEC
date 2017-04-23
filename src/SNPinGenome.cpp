@@ -189,8 +189,9 @@ void SNPinGenome::readMateFile(std::string const& mateFile, std::string const& i
 
 void SNPinGenome::readMateFile(std::string const& mateFile, std::string const& inputFormat, int minimalTotalLetterCountPerPosition, int minimalQualityPerPosition, GenomeCopyNumber& genomeCopyNumber, std::string const& chrLenFileName, int windowSize, int step,  std::string targetBed) {
   // must perform partly GenomeCopyNumber::readCopyNumber line #114, all but fillMyHash
-  genomeCopyNumber.initCopyNumber(chrLenFileName, windowSize, step, targetBed);
-  assignValues(mateFile, inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, &genomeCopyNumber);
+    genomeCopyNumber.initCopyNumber(chrLenFileName, windowSize, step, targetBed);
+    assignValues(mateFile, inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition, &genomeCopyNumber);
+
   pileup_read = true;
 }
 
