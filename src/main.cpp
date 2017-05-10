@@ -282,7 +282,7 @@ int main(int argc, char *argv[])
         if (sample_inputFormat.compare("")==0) {
             cerr << "Error: You need to set the inputFormat to be avaible to read "<< sample_MateFile << "\n";
             cerr << "Available formats:SAM, BAM, pileup, Eland, BED, SOAP, arachne, psl (BLAT) and Bowtie\n";
-            cerr << "FREEC works exclusively with 'inputFormat=pileup' when the user uses option [BAF]\n";
+            cerr << "FREEC accepts 'inputFormat=pileup' and BAM when the user uses option [BAF]\n";
             exit (0);
         } else {
         		cout << "..Sample input format:\t" << sample_inputFormat << "\n";
@@ -327,7 +327,7 @@ int main(int argc, char *argv[])
         if (control_inputFormat.compare("")==0) {
             cerr << "Error: You need to set the inputFormat to be avaible to read "<< control_MateFile << "\n";
             cerr << "Available formats:SAM, BAM, pileup, Eland, BED, SOAP, arachne, psl (BLAT) and Bowtie\n";
-            cerr << "FREEC works exclusively with 'inputFormat=pileup' when the user uses option [BAF]\n";
+            cerr << "FREEC works exclusively with 'inputFormat=pileup' or BAM when the user uses option [BAF]\n";
             exit (0);
         } else {
         		cout << "..Input format for the control file:\t" << control_inputFormat << "\n";

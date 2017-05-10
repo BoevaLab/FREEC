@@ -402,6 +402,7 @@ std::vector <float> ChrCopyNumber::getValues() {
 void ChrCopyNumber::removeLowReadCountWindows(ChrCopyNumber control,const int RCThresh) {
     if (length_!=control.getLength()) {
         cerr << "Warning: control length is not equal to the sample length for chromosome " << chromosome_ << "\n";
+        cerr << "Sample: " << length_ << " windows; control: "<< control.getLength()<<" windows\n";
         return;
     }
     for (int i = 0; i<length_; i++) {
