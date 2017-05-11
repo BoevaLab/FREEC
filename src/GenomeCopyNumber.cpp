@@ -481,8 +481,6 @@ void GenomeCopyNumber::recalculateRatioUsingCG (int degree, bool intercept, floa
 	vector<ChrCopyNumber>::iterator it;
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
 		if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
-
-
              //use a threshold, but correct using notN profile
             if (it->getMappabilityLength()>0) {
                 for (int i = 0; i< it->getLength(); i++) {
@@ -551,11 +549,18 @@ int GenomeCopyNumber::calculateRatioUsingCG (bool intercept, float minExpectedGC
     vector <float> y; //y ~ ax^2+bx+c
     vector <float> x;
 
-    //fill x and y:
+    //check whether there are chromosomes without X and Y:
     vector<ChrCopyNumber>::iterator it;
+    int countAutosomes = 0;
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+            countAutosomes++;
+        }
+    }
+    //fill x and y:
     for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
 
-            if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+            if (countAutosomes>0 && !(it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos) || countAutosomes==0) {
                 // if uniqueMatch, do correction to mappability
                 if (uniqueMatch) {
                     //use mappabilityProfile_ and correct
@@ -994,8 +999,18 @@ double GenomeCopyNumber::calculateMedianAround (float interval, float around) {
 
 	vector <float> myValuesAround;
 	vector<ChrCopyNumber>::iterator it;
+
+
+    int countAutosomes = 0;
+    for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
+        if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
+            countAutosomes++;
+        }
+    }
+
+
 	for ( it=chrCopyNumber_.begin() ; it != chrCopyNumber_.end(); it++ ) {
-		if (! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos))
+		if (countAutosomes>0 && ! (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos) || countAutosomes==0)
 			for (int i = 0; i< it->getLength(); i++) {
 				if ((it->getCGprofileAt(i)<=maxCG)&&(it->getCGprofileAt(i)>=minCG))
 					if (it->getValueAt(i) >0) //non-zero values
