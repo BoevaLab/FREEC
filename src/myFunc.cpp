@@ -71,6 +71,36 @@ std::vector<std::string> &split(const std::string &s, char delim, std::vector<st
     return elems;
 }
 
+bool checkChrLen(const std::string &chrLenFile,const std::string &targetBed) {
+    std::vector<std::string> names;
+	std::vector<int> lengths;
+    std::vector<std::string> names_bed;
+	readFileWithGenomeInfo(chrLenFile, names, lengths);
+    readChrNamesInBed(targetBed, names_bed);
+    bool toReturn = true;
+
+    if(names.empty()){
+        cerr << "Error:Cound not read "<< chrLenFile<<"\n";
+        exit(1);
+    }
+    if(names_bed.empty()){
+        cerr << "Error:Cound not read "<< targetBed<<"\n";
+        exit(1);
+    }
+
+    for (int i=0; i<names.size();i++) {
+        if(std::find(names_bed.begin(), names_bed.end(), names[i]) != names_bed.end()) {
+                /* names_bed contains names[i]; everything is OK */
+        } else {
+                /* names_bed does not contain names[i] */
+                toReturn = false;
+                cerr << "Error: chromosome "<< names[i]<< " present in your "<<chrLenFile << " file was not detected in your file with capture regions " <<targetBed<<"\n";
+                cerr << "Please solve this issue and rerun Control-FREEC\n";
+                cerr << "For example, you can remove chromosome "<< names[i]<<" from your "<<chrLenFile<<"\n";
+        }
+    }
+    return toReturn;
+}
 
 std::vector<std::string> split(const std::string &s, char delim) {
     std::vector<std::string> elems;
@@ -233,6 +263,38 @@ float get_iqr(const std::vector<float>& myvector) {
 
   return upper_quartile - lower_quartile;
 }
+
+void readChrNamesInBed(const std::string &targetBed, std::vector<std::string>&names_bed){
+    ifstream file(targetBed.c_str());
+	if (!file.is_open()) {
+        cerr << "Error: unable to open "+targetBed+"\n" ;
+        exit(-1);
+	}
+	string line;
+	string name;
+	bool isFai=0;
+	while (std::getline(file,line)) {
+		if (! line.length()) continue;
+		if (line[0] == '#') continue;
+
+		std::vector<std::string> strs = split(line, '\t');
+		if (strs.size()<2) {
+		    continue;
+		}
+        name  = strs[0];
+		strs.clear();
+		myReplace(name, " ", "");
+
+		//delete "Chr"
+		string::size_type pos = 0;
+		if ( (pos = name.find("chr", pos)) != string::npos )
+			name.replace( pos, 3, "" );
+
+        names_bed.push_back(name);
+	}
+	file.close();
+}
+
 
 void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::string>& names, std::vector<int>& lengths) {
 	//reading the file with genome information

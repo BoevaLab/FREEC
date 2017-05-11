@@ -520,6 +520,16 @@ int main(int argc, char *argv[])
     std::string chrLenFile = (std::string)cf.Value("general","chrLenFile","");
     cout << "..File with chromosome lengths:\t" << chrLenFile << "\n";
 
+    if (targetBed!="" & chrLenFile!="") {
+        //make a check that in the chromosome length file there is no chromosomes absent in the captureRegions:
+        bool chrLenFileIsOK = checkChrLen(chrLenFile,targetBed);
+        if (!chrLenFileIsOK) {
+            cerr <<"Will exit\n";
+            exit (1);
+        }
+    }
+
+
     bool isMinMappabilitySet = cf.hasValue("general","minMappabilityPerWindow");
     minMappabilityPerWindow = double(cf.Value("general","minMappabilityPerWindow",0.85));
     if (isMinMappabilitySet && isUseGC) {

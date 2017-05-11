@@ -83,6 +83,7 @@ float get_weighted_mean(const std::vector<float>& data, const std::vector<float>
 float get_sum(const std::vector<float>& data) ;
 float get_iqr(const std::vector<float>& data);
 void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::string>& names, std::vector<int>& lengths);
+void readChrNamesInBed(const std::string &targetBed, std::vector<std::string>&names_bed);
 unsigned long sum(const std::vector<int>& data);
 long getLineNumber(std::string const& file, const std::string& pathToSamtools, const std::string& pathToSambamba, const std::string& SambambaThreads);
 long getReadNumberFromPileup(std::string const& file);
@@ -150,6 +151,7 @@ void advance_to(const std::string& haystack, size_t& offset, char needle) ;
 std::vector<float> get_quartiles(std::vector<float> vect);
 
 int calculateTotalLength(std::vector <int> lefts,std::vector <int> rights);
+bool checkChrLen(const std::string &chrLenFile,const std::string &targetBed) ;
 
 #ifdef _WIN32
 double expm1(double x);
