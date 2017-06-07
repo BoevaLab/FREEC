@@ -18,7 +18,9 @@ for (i in c(1:22,'X','Y')) {
 	 tt <- which(ratio$Chromosome==i  & ratio$CopyNumber>ploidy )
 	 points(ratio$Start[tt],log2(ratio$Ratio[tt]),pch = ".",col = colors()[136])
 	
-	
+	tt <- which(ratio$Chromosome==i  & ratio$Ratio==maxLevelToPlot & ratio$CopyNumber>ploidy)	
+	points(ratio$Start[tt],log2(ratio$Ratio[tt]),pch = ".",col = colors()[136],cex=4)
+	 
 	tt <- which(ratio$Chromosome==i  & ratio$CopyNumber<ploidy & ratio$CopyNumber!= -1)
 	 points(ratio$Start[tt],log2(ratio$Ratio[tt]),pch = ".",col = colors()[461])
 	 tt <- which(ratio$Chromosome==i)
