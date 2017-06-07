@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 library(rtracklayer)
 
 args <- commandArgs()

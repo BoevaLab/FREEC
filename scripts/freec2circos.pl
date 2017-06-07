@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #translate "*_ratio.txt" (output of FREEC) into a Circos track
 
 use strict;
