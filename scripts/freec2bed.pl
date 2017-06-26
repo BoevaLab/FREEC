@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #translate *_ratio.txt (the out put of FREEC) into a BED track
 
 use strict;

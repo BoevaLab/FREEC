@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
             }
     }
 
-	int minimalTotalLetterCountPerPosition = round_f(float(cf.Value("general","minimalCoveragePerPosition", 0)));
+	int minimalTotalLetterCountPerPosition = round_f(float(cf.Value("BAF","minimalCoveragePerPosition", 0)));
 	if (minimalTotalLetterCountPerPosition>0) {
         cout << "..will use a threshold of "<< minimalTotalLetterCountPerPosition <<" read(s) per SNP position to calculate beta allel frequency (BAF) values\n";
 	}

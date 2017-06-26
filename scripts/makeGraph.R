@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 args <- commandArgs()
 
 dataTable <-read.table(args[5], header=TRUE);

@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 #prints lengths of sequences from a multifasta file
 
 use strict;

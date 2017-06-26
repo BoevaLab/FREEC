@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 path = "/data/tmp/cgurjao/Graphical_outputs/R\ scripts/FREEC_7.4/Single-end"
 setwd(path)
 
@@ -10,6 +11,14 @@ args[4] = 1
 
 dataTable <-read.table(args[6], header=T, na.strings="NA");
 print(paste (args[6],"read"))
+=======
+#!/usr/bin/env Rscript
+
+args <- commandArgs()
+
+dataTable <-read.table(args[6], header=TRUE);
+print( paste (args[6],"read"))
+>>>>>>> 76030ffbfebd715b07a1c240056a37cb02bbb1ff
 ratio<-data.frame(dataTable)
 chr <- type.convert(args[4])
 ploidy <- type.convert(args[5])
