@@ -1678,7 +1678,7 @@ void ChrCopyNumber::addBAFinfo(SNPinGenome & snpingenome,int indexSNP) {
                     }
                 else
                     {
-                    i=max(-1,i-windowSize_/step_-1);
+                    i=max(-1,i-windowSize_/step_-2); //changed -1 to -2 in version 10.9
                     }
                     //cout << SNPcount << " out of "<< totalSNPnumber<<"\n";
             }
