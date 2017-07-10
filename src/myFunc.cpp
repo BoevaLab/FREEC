@@ -2617,8 +2617,9 @@ MateOrientation getMateOrientation(std::string const& matesOrientation)
   if (matesOrientation.compare("FF") == 0 || matesOrientation.compare("RR") == 0 || matesOrientation.compare("FF/RR") == 0 || matesOrientation.compare("RR/FF") == 0) {
 	return SOLID_MATE_PAIRS;
   }
-
-  return UNKNOWN_MATE_ORIENTATION;
+  cerr << "Error: you have set an unknown read orientation: \""<<matesOrientation<<"\" ; it does not match 0, RF, FR or FF; please correct your config file.\n";
+  exit(1);
+  return SINGLE_END_SORTED_SAM; // instead of UNKNOWN_MATE_ORIENTATION;
 }
 
 InputFormat getInputFormat(std::string const& inputFormat)

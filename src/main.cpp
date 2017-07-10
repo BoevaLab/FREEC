@@ -816,13 +816,20 @@ int main(int argc, char *argv[])
 
 
     if (WESanalysis == false)    {
-        if (step != NA) {
-            sampleCopyNumber.setStep(step);
-        }
         if (has_sample_mateCopyNumberFile) {
             sampleCopyNumber.readCopyNumber(sample_MateCopyNumberFile);
-            step = sampleCopyNumber.getStep();
+            int step_fromProfile = sampleCopyNumber.getStep();
+            if (step!= NA && step_fromProfile !=step) {
+                cerr << "Error: according to " << sample_MateCopyNumberFile<< " your step paramter is equal to step_fromProfile\n";
+                cerr << "However, you set step=" <<step<< " in your config file\n";
+                cerr << "This created this error. Either delete \"step\" from your config or set it to the right value of "<<sample_MateCopyNumberFile<<"\n";
+                exit (-1);
+            }
+            step=step_fromProfile;
         } else {
+            if (step != NA) {
+                sampleCopyNumber.setStep(step);
+            }
             if (!sample_copyNumber_pileup_read && has_window) {
                     sampleCopyNumber.readCopyNumber(sample_MateFile, sample_inputFormat, sample_mateOrientation,chrLenFile, window, step);
             } else if (!sample_copyNumber_pileup_read && !has_window) {
