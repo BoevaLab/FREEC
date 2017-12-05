@@ -356,7 +356,7 @@ int main(int argc, char *argv[])
     std::string makePileup = (std::string)cf.Value("BAF","makePileup", "false");
     std::string fastaFile = (std::string)cf.Value("BAF","fastaFile", "false");
     std::string miniPileupFileSample = (std::string)cf.Value("sample","miniPileup", "false");
-    std::string miniPileupFileControl = (std::string)cf.Value("sample","miniPileup", "false");
+    std::string miniPileupFileControl = (std::string)cf.Value("control","miniPileup", "false");
 
 	bool isHasMiniPileUPsample = (miniPileupFileSample=="false")?0:1;
     bool isHasMiniPileUPcontrol = (miniPileupFileControl=="false")?0:1;
