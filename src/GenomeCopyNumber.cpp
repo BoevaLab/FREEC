@@ -3390,7 +3390,7 @@ float GenomeCopyNumber::evaluateContamination () {
                     if (chrCopyNumber_[index].isSmoothed() && WESanalysis == false)
                         expected = chrCopyNumber_[index].getSmoothedProfileAtI(i);
                 }
-                if (!(expected == 1 || expected <= 0 || expected >= 2 || observed > 3 || observed <= 0)
+                if (!(expected == 1 || expected <= 0 || expected >= 1+2.0/ploidy_ || observed > 3 || observed <= 0)
                     && (((1>observed)&&(1>expected))||((1<observed)&&(1<expected)))) {// should it be something related to ploidy_ and not 2
                     float p = (observed-expected)/(observed-expected+2/ploidy_*(1-observed));
                     if (p>-0.5 && p<1.5) {
@@ -3445,7 +3445,7 @@ float GenomeCopyNumber::evaluateContaminationwithLR () {
                 if (chrCopyNumber_[index].isMedianCalculated()) {
                     expected = round_by_ploidy(chrCopyNumber_[index].getMedianProfileAtI(i),ploidy_) ;
                 }
-                if (expected!=NA && expected<2){
+                if (expected!=NA && expected<1+2.0/ploidy_){
                     observed_values.push_back(observed-1);
                     expected_values.push_back(expected-1);
                 }
