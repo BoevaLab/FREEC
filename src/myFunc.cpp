@@ -1497,7 +1497,7 @@ std::string stringFromBool (bool value) {
 }
 
 float runEM (const vector<float>& x,const vector<float>& y,double * a, int degree, int & NumberOfIterations,int ploidy, int maximalNumberOfCopies, bool intercept, float contamination) {
-
+    if (contamination==0) contamination=0.3; //starting from v11.2 - to improve the fit
 	float rmserror = -1;
 
 	if (x.size() != y.size()) {
