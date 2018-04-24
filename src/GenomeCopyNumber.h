@@ -110,6 +110,7 @@ public:
     bool getWESanalysis();
     double getGenomeRefSize();
     int getNumberOfChromosomes();
+    bool ifHasRatio();
 
 
 	void setPloidy(int ploidy);

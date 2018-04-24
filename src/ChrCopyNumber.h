@@ -98,7 +98,7 @@ public:
 
 	bool isMedianCalculated();
 	bool isSmoothed();
-
+    bool ifHasRatio();
 
 
 	void fillCGprofile(std::string const& chrFolder);

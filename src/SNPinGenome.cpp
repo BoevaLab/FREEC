@@ -213,18 +213,23 @@ void SNPinGenome::perform(std::string const& mateFile, const std::string& inputF
     if (!pileup_read) {
 	  assignValues(mateFile, inputFormat, minimalTotalLetterCountPerPosition,minimalQualityPerPosition);
 	}
-	cout << "..Adding BAF info to the " << what << " dataset" << std::endl;
-	genomeCopyNumber.addBAFinfo(*this);
-	cout << "..Recalculate breakpoints using BAF profiles" << std::endl;
-	genomeCopyNumber.calculateBAFBreakpoints(breakPointThreshold,breakPointType);
-	cout << "..Recalculate median values" << std::endl;
-	genomeCopyNumber.calculateCopyNumberMedians(minCNAlength, noisyData, CompleteGenomicsData);
 
-	cout << "..Reannotate copy numbers" << std::endl;
-	if (genomeCopyNumber.getWESanalysis() == false)
-        {genomeCopyNumber.calculateCopyNumberProbs_and_genomeLength(breakPointType);}
-    else
-        {genomeCopyNumber.calculateCopyNumberProbs_and_exomeLength(breakPointType);}
+	if (genomeCopyNumber.ifHasRatio()) {
+        cout << "..Adding BAF info to the " << what << " dataset" << std::endl;
+        genomeCopyNumber.addBAFinfo(*this);
+        cout << "..Recalculate breakpoints using BAF profiles" << std::endl;
+        genomeCopyNumber.calculateBAFBreakpoints(breakPointThreshold,breakPointType);
+        cout << "..Recalculate median values" << std::endl;
+        genomeCopyNumber.calculateCopyNumberMedians(minCNAlength, noisyData, CompleteGenomicsData);
+
+        cout << "..Reannotate copy numbers" << std::endl;
+        if (genomeCopyNumber.getWESanalysis() == false)
+            {genomeCopyNumber.calculateCopyNumberProbs_and_genomeLength(breakPointType);}
+        else
+            {genomeCopyNumber.calculateCopyNumberProbs_and_exomeLength(breakPointType);}
+
+    }
+
 	cout << "..Done" << std::endl;
 }
 

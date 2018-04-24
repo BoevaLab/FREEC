@@ -707,8 +707,8 @@ int main(int argc, char *argv[])
 	snpingenome.setWESanalysis(WESanalysis);
 	SNPinGenome snpingenomeControl;
     snpingenomeControl.setWESanalysis(WESanalysis);
-    if (makePileup== "false") {
-        snpingenome.setCopyNumberFromPileup(true); //use pileup for copy number asessment, not only for BAFs
+    if (makePileup== "false" && !isHasMiniPileUPcontrol && !isHasMiniPileUPsample) {
+        snpingenome.setCopyNumberFromPileup(true); //use pileup for copy number assessment, not only for BAFs
         snpingenomeControl.setCopyNumberFromPileup(true);
     }
 
@@ -1070,7 +1070,7 @@ int main(int argc, char *argv[])
 
 	    sampleCopyNumber.printBAF(myName,snpingenome,sample_MateFile);
 
-        if (isControlIsPresent && makePileup == "false") {
+        if (isControlIsPresent && makePileup == "false" && !ifTargeted) { // will output Control data only for WGS data!
             sampleCopyNumber.calculateSomaticCNVs(controlCopyNumber.getCNVs(),controlCopyNumber.getPloidy());
             controlCopyNumber.printBAF(controlName,snpingenomeControl,control_MateFile);
             controlCopyNumber.printRatio(myName+"_normal_ratio.txt",0,printNA);

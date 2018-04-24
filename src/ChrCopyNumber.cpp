@@ -640,6 +640,11 @@ void ChrCopyNumber::calculateRatio(double *a, int degree) {
 //	}
 //}
 
+bool ChrCopyNumber::ifHasRatio() {
+    if (ratio_.size()>0) return 1;
+    return 0;
+}
+
 void ChrCopyNumber::recalculateRatio (float constant) {
 	for (int i = 0; i<length_; i++)
 		if (ratio_[i] != NA)
@@ -1684,9 +1689,11 @@ void ChrCopyNumber::addBAFinfo(SNPinGenome & snpingenome,int indexSNP) {
             }
         }
     }
-
+    if (ratio_.size()==0) {
+        cerr << "Warning: Normalized read counts (ratio_) has not been initialized; check your parameters\n";
+    }
     for (int i = 0; i<length_; i++) {
-        if (ratio_[i]==NA && BAF_[i]!=NA)     //set BAF=NA in windows with ratio==NA to remove the noise from windows with low mappability
+        if (ratio_.size()>i && ratio_[i]==NA && BAF_[i]!=NA)     //set BAF=NA in windows with ratio==NA to remove the noise from windows with low mappability
             BAF_[i]=NA;
 
         if (BAF_[i]==0)     //remove windows with 100% AA counts

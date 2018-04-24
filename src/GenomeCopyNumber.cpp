@@ -1099,6 +1099,11 @@ int GenomeCopyNumber::getNumberOfChromosomes() {
     return chrCopyNumber_.size();
 }
 
+bool GenomeCopyNumber::ifHasRatio() {
+    if (chrCopyNumber_[0].ifHasRatio()) return 1;
+    return 0;
+}
+
 long double GenomeCopyNumber::calculateRSS(int ploidy)
 {
     string::size_type pos = 0;
