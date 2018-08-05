@@ -211,7 +211,7 @@ void BAFpileup::createBedFileWithChromosomeLengths(std::string bedFileWithRegion
 			name  = strs[0];
 			value = atoi(strs[1].c_str());
 		}
-		if (strs.size()>=3 && strs[0].substr(0,3)!="chr") {
+		if (strs.size()>=3 && strs[0].substr(0,3)!="chr" && !isFai) {
 			name  = strs[1];
 			value = atoi(strs[2].c_str());
 		}

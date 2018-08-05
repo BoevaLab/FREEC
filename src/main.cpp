@@ -275,6 +275,8 @@ int main(int argc, char *argv[])
 	std::string sample_MateCopyNumberFile = "";
     string sample_inputFormat = std::string(cf.Value("sample","inputFormat",""));
     std::string sample_mateOrientation = (std::string)cf.Value("sample","mateOrientation","0");
+    sample_mateOrientation = (std::string)cf.Value("sample","matesOrientation",sample_mateOrientation);
+
 
     if (has_sample_MateFile) {
         sample_MateFile = std::string(cf.Value("sample","mateFile")) ;

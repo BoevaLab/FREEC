@@ -371,7 +371,7 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
 	cout << normalNumberOfPairs_<< " reads used to compute copy number profile\n";
 	if (normalNumberOfPairs_==0) {
         cerr << "\nError: FREEC was not able to extract reads from " << mateFileName;
-        cerr << "\n\nCheck your parameters: inputFormat and matesOrientation\n";
+        cerr << "\n\nCheck your parameters: inputFormat and mateOrientation\n";
         cerr << "Use \"matesOrientation=0\" if you have single end reads\n";
         cerr << "Check the list of possible input formats at http://bioinfo-out.curie.fr/projects/freec/tutorial.html#CONFIG\n\n";
 
