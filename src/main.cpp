@@ -1009,13 +1009,36 @@ int main(int argc, char *argv[])
     int secondBest= ploidies[max_element(percentage_GenExpl.begin(),percentage_GenExpl.end())-percentage_GenExpl.begin()];
     cout << "..Best ploidy could have been set to "<<secondBest << " according to the percentage of the copy number changes explained by a model with a given ploidy"<<endl;
 
+    /*
+    So far null ploidy was reset from 4 to 2 if fraction of genome explained in case of
+    ploidy = 2 was higher, equal or only slightly lower compared to ploidy = 4 case.
+    In detail, the difference between fractions must have been < 0.05
+
+    Here the 'genomeExplainedMaxDiff' config parameter is introduced to let the user decide.
+    The default value for the param is 0.05
+    */
+    double genomeExplainedMaxDiff = (double)cf.Value("general", "genomeExplainedMaxDiff", 0.05);
+    cout << "..genomeExplanedMaxDiff set to: "<<genomeExplainedMaxDiff << "."<<endl;
+
     if (bestPloidy==4 && std::find(ploidies.begin(), ploidies.end(), 2) != ploidies.end()) {
         int ind2=std::find(ploidies.begin(), ploidies.end(), 2)-ploidies.begin();
         int ind4=std::find(ploidies.begin(), ploidies.end(), 4)-ploidies.begin();
 
-        if (percentage_GenExpl[ind4]-percentage_GenExpl[ind2]<0.05 || unexplainedChromosomes[ind2]<=1) {
+        if (percentage_GenExpl[ind4]-percentage_GenExpl[ind2]<genomeExplainedMaxDiff || unexplainedChromosomes[ind2]<=1) {
             bestPloidy=2;
             cout << "..Changed ploidy to 2 as there is little difference in the fit betweeen ploidies 4 and 2:" << endl;
+            cout << "unexplained regions for ploidy 2 are located on " <<unexplainedChromosomes[ind2]<< " chromosomes"<< endl;
+        }
+    }
+
+    // Add also scenario 3 => 2 for best ploidy. Use same rules  as in case of 4 => 2 change
+    if (bestPloidy==3 && std::find(ploidies.begin(), ploidies.end(), 2) != ploidies.end()) {
+        int ind2=std::find(ploidies.begin(), ploidies.end(), 2)-ploidies.begin();
+        int ind3=std::find(ploidies.begin(), ploidies.end(), 3)-ploidies.begin();
+
+        if (percentage_GenExpl[ind3]-percentage_GenExpl[ind2]<genomeExplainedMaxDiff || unexplainedChromosomes[ind2]<=1) {
+            bestPloidy=2;
+            cout << "..Changed ploidy to 2 as there is little difference in the fit betweeen ploidies 3 and 2:" << endl;
             cout << "unexplained regions for ploidy 2 are located on " <<unexplainedChromosomes[ind2]<< " chromosomes"<< endl;
         }
     }
