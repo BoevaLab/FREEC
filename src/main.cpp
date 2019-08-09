@@ -54,20 +54,104 @@ static const char* get_conf_file(int argc, char *argv[])
 	exit(0);
   }
 
-  if (argc > 3 || (strcmp(argv[1], "-conf") != 0 && strcmp(argv[1], "-config") != 0 && strcmp(argv[1], "--conf") != 0)) {
-	usage();
+  const char* conf_file;
+  bool conf_file_set=0;
+
+  if (argc >= 3 && (strcmp(argv[1], "-conf") == 0 || strcmp(argv[1], "-config") == 0 || strcmp(argv[1], "--config") == 0 || strcmp(argv[1], "--conf") == 0)) {
+        conf_file = argv[2];
+        conf_file_set=1;
+  } else {
+        if (argc >= 5 && (strcmp(argv[3], "-conf") == 0 || strcmp(argv[3], "-config") == 0 || strcmp(argv[3], "--config") == 0 || strcmp(argv[3], "--conf") == 0)) {
+            conf_file = argv[4];
+            conf_file_set=1;
+        } else {
+            if (argc >= 7 && (strcmp(argv[5], "-conf") == 0 || strcmp(argv[5], "-config") == 0 || strcmp(argv[5], "--config") == 0 || strcmp(argv[5], "--conf") == 0)) {
+                conf_file = argv[6];
+                conf_file_set=1;
+            }
+        }
+  }
+
+  if(!conf_file_set) {
+    usage();
 	exit(0);
   }
 
-  const char* conf_file = argv[2];
   ifstream ifile(conf_file);
 
   if (!ifile) {
 	std::cerr << "\n\tCould not find your config file.. Please, check the existance of "<< conf_file <<"\n\n";
+	usage();
 	exit(-1);
   }
 
   return conf_file;
+}
+
+
+
+static const char* getSampleNameFromCommandLine(int argc, char *argv[])
+{
+  const char* sample_file;
+  bool sample_file_set=0;
+
+  if (argc >= 3 && (strcmp(argv[1], "-s") == 0 || strcmp(argv[1], "-sample") == 0 || strcmp(argv[1], "--s") == 0 || strcmp(argv[1], "--sample") == 0)) {
+        sample_file = argv[2];
+        sample_file_set=1;
+  } else {
+        if (argc >= 5 && (strcmp(argv[3], "-s") == 0 || strcmp(argv[3], "-sample") == 0 || strcmp(argv[3], "--s") == 0 || strcmp(argv[3], "--sample") == 0)) {
+            sample_file = argv[4];
+            sample_file_set=1;
+        } else {
+            if (argc >= 7 && (strcmp(argv[5], "-s") == 0 || strcmp(argv[5], "-sample") == 0 || strcmp(argv[5], "--s") == 0 || strcmp(argv[5], "--sample") == 0)) {
+                sample_file = argv[6];
+                sample_file_set=1;
+            }
+        }
+  }
+  if(!sample_file_set) {
+   cerr << "Error: You should provide a path to your sample either in the config file or in command line" << "\n";
+    usage();
+	exit(0);
+  }
+  ifstream ifile(sample_file);
+  if (!ifile) {
+	std::cerr << "\n\tCould not find your sample file.. Please, check the existance of "<< sample_file <<"\n\n";
+	usage();
+	exit(-1);
+  }
+  return sample_file;
+}
+
+static const char* getControlNameFromCommandLine(int argc, char *argv[])
+{
+  const char* sample_file;
+  bool sample_file_set=0;
+
+  if (argc >= 3 && (strcmp(argv[1], "-c") == 0 || strcmp(argv[1], "-control") == 0 || strcmp(argv[1], "--c") == 0 || strcmp(argv[1], "--control") == 0)) {
+        sample_file = argv[2];
+        sample_file_set=1;
+  } else {
+        if (argc >= 5 && (strcmp(argv[3], "-c") == 0 || strcmp(argv[3], "-control") == 0 || strcmp(argv[3], "--c") == 0 || strcmp(argv[3], "--control") == 0)) {
+            sample_file = argv[4];
+            sample_file_set=1;
+        } else {
+            if (argc >= 7 && (strcmp(argv[5], "-c") == 0 || strcmp(argv[5], "-control") == 0 || strcmp(argv[5], "--c") == 0 || strcmp(argv[5], "--control") == 0)) {
+                sample_file = argv[6];
+                sample_file_set=1;
+            }
+        }
+  }
+  if(!sample_file_set) {
+   return ("");
+  }
+  ifstream ifile(sample_file);
+  if (!ifile) {
+	std::cerr << "\n\tCould not find your control file.. Please, check the existance of "<< sample_file <<"\n\n";
+	usage();
+	exit(-1);
+  }
+  return sample_file;
 }
 
 static void thread_init(unsigned int max_threads, unsigned int thread_verbose)
@@ -197,7 +281,7 @@ int main(int argc, char *argv[])
     } else if (!has_coefficientOfVariation && has_window) {
             cout << "..Window = "<< window << " was set\n";
     } else if (!ifTargeted) {
-        cerr << "Error: 'coefficientOfVariation' or 'window' must be provided\n";
+        cerr << "Warning: 'coefficientOfVariation' or 'window' must be provided\n";
         cout << "..FREEC will use the coefficientOfVariation=0.05 to evaluate window size\n";
         coefficientOfVariation=0.05;
         has_coefficientOfVariation=true;
@@ -280,6 +364,14 @@ int main(int argc, char *argv[])
 
     if (has_sample_MateFile) {
         sample_MateFile = std::string(cf.Value("sample","mateFile")) ;
+    } else {
+        // will try to get MateFile from the command line:
+        sample_MateFile = getSampleNameFromCommandLine(argc, argv);
+        if (sample_MateFile.compare("")!=0) { //i.e. there is information in the command line about the sample
+            has_sample_MateFile=1;
+        }
+    }
+    if (has_sample_MateFile) {
 		cout << "..Sample file:\t" << sample_MateFile << "\n";
         if (sample_inputFormat.compare("")==0) {
             cerr << "Error: You need to set the inputFormat to be avaible to read "<< sample_MateFile << "\n";
@@ -300,6 +392,7 @@ int main(int argc, char *argv[])
                 }
 		}
     }
+
     if (has_sample_mateCopyNumberFile){
         sample_MateCopyNumberFile = std::string(cf.Value("sample","mateCopyNumberFile"));
         cout << "..Sample file with precalculated copy numbers:\t" << sample_MateCopyNumberFile << "\n";
@@ -325,6 +418,14 @@ int main(int argc, char *argv[])
 
     if (has_control_MateFile) {
         control_MateFile = std::string(cf.Value("control","mateFile")) ;
+    } else {
+        // will try to get control_MateFile from the command line:
+        control_MateFile = getControlNameFromCommandLine(argc, argv);
+        if (control_MateFile.compare("")!=0) { //i.e. there is information in the command line about the sample
+            has_sample_MateFile=1;
+        }
+    }
+    if (has_control_MateFile) {
 		cout << "..Control file:\t" << control_MateFile << "\n";
         if (control_inputFormat.compare("")==0) {
             cerr << "Error: You need to set the inputFormat to be avaible to read "<< control_MateFile << "\n";
