@@ -2389,9 +2389,6 @@ void GenomeCopyNumber::calculateCopyNumberProbs_and_genomeLength(int breakPointT
 
             if (sex_.compare("XY")==0 && (it->getChromosome().find("X")!=string::npos || it->getChromosome().find("Y")!=string::npos)) {
                 if ((cnumber != normalXYploidy)&&(cnumber != NA))
-                    CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber)); //save previous CNV
-
-                if ((cnumber != normalXYploidy)&&(cnumber != NA))
                     if (hasBAF_)
                         CNVs_.push_back(EntryCNV(it->getChromosome(),start,end,start*windowSize_,realEndOfTheCNV,cnumber,lUncertainty, lBAF,hasBAF_)); //save previous CNV
                     else
