@@ -25,6 +25,8 @@ void usage() {
 	std::cout << "Usage:\n\n";
 	//printf("ahokocc <arguments>\n\n");
 	std::cout << "\tfreec -conf <config file>\n\n\tSee config.txt for example\n";
+	std::cout << "\tor\n";
+	std::cout << "\tfreec -conf <config file> -sample <mySample.bam> -control <myControl.bam>\n\n\tSee config.txt for example\n";
 
 	return;
 }
