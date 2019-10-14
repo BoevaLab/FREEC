@@ -85,7 +85,7 @@ float get_iqr(const std::vector<float>& data);
 void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::string>& names, std::vector<int>& lengths);
 void readChrNamesInBed(const std::string &targetBed, std::vector<std::string>&names_bed);
 unsigned long sum(const std::vector<int>& data);
-long getLineNumber(std::string const& file, const std::string& pathToSamtools, const std::string& pathToSambamba, const std::string& SambambaThreads);
+long getLineNumber(std::string const& file, std::string const& refFileName, const std::string& pathToSamtools, const std::string& pathToSambamba, const std::string& SambambaThreads);
 long getReadNumberFromPileup(std::string const& file);
 int factorial (int num);
 int get_max_index(const std::vector<float>& data);

@@ -253,6 +253,9 @@ int main(int argc, char *argv[])
 
     string pathToSambamba = (std::string)cf.Value("general","sambamba","");
     string SambambaThreads = "";
+
+    SambambaThreads = (std::string)cf.Value("general","maxThreads",""); /* initialize SambambaThreads using maxThreads -- calkan */
+
     if (pathToSambamba != "")    {
         SambambaThreads = (std::string)cf.Value("general","SambambaThreads","");
         if (SambambaThreads == "")       {
@@ -262,7 +265,7 @@ int main(int argc, char *argv[])
         }
     }
 
-	bool has_window = cf.hasValue("general","window");
+    bool has_window = cf.hasValue("general","window");
     int window = (int)cf.Value("general","window",NA);
     bool ifTargeted = cf.hasValue("target","captureRegions");
 
@@ -792,16 +795,18 @@ int main(int argc, char *argv[])
     }
 
 	GenomeCopyNumber sampleCopyNumber;
-	sampleCopyNumber.setSamtools(pathToSamtools);
+	sampleCopyNumber.setSamtools(pathToSamtools, SambambaThreads);
 	sampleCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
+	sampleCopyNumber.setReference(fastaFile);
 	sampleCopyNumber.setWESanalysis(WESanalysis);
 	sampleCopyNumber.setmakingPileup(makingPileup);
 
     sampleCopyNumber.setIfLogged(logLogNorm);
 
 	GenomeCopyNumber controlCopyNumber;
-	controlCopyNumber.setSamtools(pathToSamtools);
+	controlCopyNumber.setSamtools(pathToSamtools, SambambaThreads);
 	controlCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
+	controlCopyNumber.setReference(fastaFile);
 	controlCopyNumber.setWESanalysis(WESanalysis);
 	controlCopyNumber.setmakingPileup(makingPileup);
     controlCopyNumber.setIfLogged(logLogNorm);
