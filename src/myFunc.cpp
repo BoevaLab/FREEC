@@ -352,7 +352,7 @@ unsigned long sum(const std::vector<int>& data) {
 	return sum;
 }
 
-long getLineNumber(std::string const& fileName, const std::string& pathToSamtools, const std::string& pathToSambamba, const std::string& SambambaThreads) {
+long getLineNumber(std::string const& fileName, std::string const& refFileName, const std::string& pathToSamtools, const std::string& pathToSambamba, const std::string& SambambaThreads) {
 	string line ;
 	long count = 0;
 	FILE *stream;
@@ -374,7 +374,8 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
 		#else
 				pclose(stream);
 		#endif
-    } else if (fileName.substr(fileName.size()-4,4).compare(".bam")==0) {
+    }
+    else if (fileName.substr(fileName.size()-4,4).compare(".bam")==0) {
         string command = "";
         if (pathToSambamba != "")
             {
@@ -384,7 +385,7 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
             }
         else
             {
-            command = pathToSamtools + " view "+fileName;
+            command = pathToSamtools + " view -@ "+ SambambaThreads + " " + fileName;
             //myInputFormat="sam";       //will try to use existing samtools
             cout << "..samtools should be installed to be able to read BAM files\n";
             }
@@ -403,7 +404,47 @@ long getLineNumber(std::string const& fileName, const std::string& pathToSamtool
 		#else
 				pclose(stream);
 		#endif
-    }else {
+    }
+    else if (fileName.substr(fileName.size()-5,5).compare(".cram")==0) {
+        string command = "";
+	if (refFileName == "")
+	  {
+	    cout << "..Reference FASTA file (config.fastaFile) should be given to be able to read CRAM files\n";
+	    exit (1);
+	  }
+        if (pathToSambamba != "")
+            {
+	      /* calkan -  sambamba is using a very old version of htslib. CRAM support is buggy */
+	      cout << "Sambamba has a bug in reading CRAM files. Please use samtools instead.\n";
+	      exit (1);	      
+	      /*
+            command = pathToSambamba + " view -t " + SambambaThreads + " -C -T " + refFileName + " " +fileName;
+            //myInputFormat="sam";       //will try to use existing samtools
+            cout << "..sambamba should be installed to be able to read CRAM files\n"; */
+            }
+        else
+            {
+            command = pathToSamtools + " view -T "+ refFileName + " -@" + SambambaThreads + " "+ fileName;
+            //myInputFormat="sam";       //will try to use existing samtools
+            cout << "..samtools should be installed to be able to read CRAM files\n";
+            }
+        stream =
+            #if defined(_WIN32)
+				_popen(command.c_str(), "r");
+			#else
+				popen(command.c_str(), "r");
+			#endif
+
+        while ( fgets(buffer, MAX_BUFFER, stream) != NULL ) {
+            count++;
+        }
+        #if defined(_WIN32)
+				_pclose(stream);
+		#else
+				pclose(stream);
+		#endif
+    }
+    else {
     	ifstream file(fileName.c_str()) ;
         while( getline( file, line ) ) count++ ;
         file.close();

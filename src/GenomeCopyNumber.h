@@ -118,8 +118,9 @@ public:
     void setBAFtrue();
     void setNormalContamination(float normalContamination) ;
     void setAllNormal ();
-    void setSamtools(std::string const& pathToSamtools);
+    void setSamtools(std::string const& pathToSamtools, std::string const& SambambaThreads_);
     void setSambamba(std::string const& pathToSambamba, std::string const& SambambaThreads_);
+    void setReference(std::string const& pathToReference);
     bool ifHasBAF();
     void setSex(std::string sex);
     void setSeekSubclones(bool seekSubclones);
@@ -162,6 +163,7 @@ private:
 	std::string sex_;
 	std::string pathToSamtools_;
 	std::string pathToSambamba_;
+	std::string pathToReference_;
 	std::string SambambaThreads_;
 };
 #endif

@@ -33,7 +33,7 @@ GenomeCopyNumber::GenomeCopyNumber(void)
 	sex_="";
 	SeekingSubc_ = false;
 	isMappUsed_=false;
-    totalNumberOfPairs_=0;
+	totalNumberOfPairs_=0;
 	normalNumberOfPairs_=0;
 }
 
@@ -53,7 +53,7 @@ void GenomeCopyNumber::readCopyNumber(std::string const& mateFileName ,std::stri
 	if ((inputFormat.compare("pileup")==0 || inputFormat.compare("SAMtools pileup")==0)) {
         	readNumber = getReadNumberFromPileup(mateFileName);
 	} else {
-	        readNumber = getLineNumber(mateFileName, pathToSamtools_, pathToSambamba_, SambambaThreads_);
+	  readNumber = getLineNumber(mateFileName, pathToReference_, pathToSamtools_, pathToSambamba_, SambambaThreads_);
 	}
 	cout << "\t read number:\t" << readNumber << "\n";
 	cout << "\t coefficientOfVariation:\t" << coefficientOfVariation << "\n";
@@ -273,7 +273,7 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
 	long normalCount = 0;
 	int bin = 0;
 
-	cout << "..Starting reading "<< mateFileName << "\n";
+	cout << "..[genomecopynumber] Starting reading "<< mateFileName << "\n";
 	//if (mateFileName.substr(mateFileName.size()-1,3).compare(".gz")==0) {
 	//	igzstream in( mateFileName );
 	//	if ( ! in.good()) {
@@ -310,24 +310,55 @@ void GenomeCopyNumber::fillMyHash(std::string const& mateFileName ,std::string c
 
         string myInputFormat=inputFormat_str;
         if (mateFileName.substr(mateFileName.size()-3,3).compare(".gz")!=0) {
+	  if (mateFileName.substr(mateFileName.size()-4,4).compare(".bam")==0) {
                 if (pathToSambamba_ != "")
                     {
                     command = pathToSambamba_ + " view -t " + SambambaThreads_ + " " + mateFileName;
                     myInputFormat="sam";       //will try to use existing sambamba
-                    cout << "..sambamba should be installed to be able to read BAM files; will use the following command for sambamba: "<<pathToSambamba_ + " view -t " + SambambaThreads_ + " " + mateFileName << "\n";
+                    //cout << "..sambamba should be installed to be able to read BAM files; will use the following command for sambamba: "<<pathToSambamba_ + " view -t " + SambambaThreads_ + " " + mateFileName << "\n";
+                    cout << "..sambamba should be installed to be able to read BAM files; will use the following command for sambamba: "<< command << "\n";
                     }
                 else
                     {
-                    command = pathToSamtools_ + " view "+mateFileName;
+		    command = pathToSamtools_ + " view -@ " + SambambaThreads_ + " " +mateFileName;
                     myInputFormat="sam";       //will try to use existing samtools
-                    cout << "..samtools should be installed to be able to read BAM files; will use the following command for samtools: "<<pathToSamtools_ + " view "+mateFileName<<"\n";
+                    //cout << "..samtools should be installed to be able to read BAM files; will use the following command for samtools: "<<pathToSamtools_ + " view "+mateFileName<<"\n";
+                    cout << "..samtools should be installed to be able to read BAM files; will use the following command for samtools: "<< command <<"\n";
                     }
+	  }
+	  else if (mateFileName.substr(mateFileName.size()-5,5).compare(".cram")==0) {
+ 	        if (pathToReference_ == "")
+		  {
+		    cout << "..Reference FASTA file (config.fastaFile) should be given to be able to read CRAM files\n";
+		    exit (1);
+		  }
+                if (pathToSambamba_ != "")
+                    {
+		      /* calkan -  sambamba is using a very old version of htslib. CRAM support is buggy */
+		      cout << "Sambamba has a bug in reading CRAM files. Please use samtools instead.\n";
+		      exit (1);
+		      /*
+                    command = pathToSambamba_ + " view -t " + SambambaThreads_ + " -C -T " + pathToReference_ + " " + mateFileName;
+                    myInputFormat="sam";       //will try to use existing sambamba
+		    //                    cout << "..sambamba should be installed to be able to read BAM files; will use the following command for sambamba: "<<pathToSambamba_ + " view -t " + SambambaThreads_ + " " + mateFileName << "\n";
+                    cout << "..sambamba should be installed to be able to read CRAM files; will use the following command for sambamba: "<< command << "\n";
+		      */
+                    }
+                else
+                    {
+                    command = pathToSamtools_ + " view -T "+ pathToReference_ + " -@ " + SambambaThreads_ + " " +mateFileName;
+                    myInputFormat="sam";       //will try to use existing samtools
+                    //cout << "..samtools should be installed to be able to read CRAM files; will use the following command for samtools: "<<pathToSamtools_ + " view "+mateFileName<<"\n";
+                    cout << "..samtools should be installed to be able to read CRAM files; will use the following command for samtools: "<< command << "\n";
+                    }	          
+	  }
         }
         else {
             command = "gzip -cd "+mateFileName;
 		}
 
 		inputFormat = getInputFormat(myInputFormat);
+
         stream =
 #if defined(_WIN32)
 		  _popen(command.c_str(), "r");
@@ -4261,8 +4292,13 @@ int GenomeCopyNumber::focusOnCapture (std::string const& captureFile) {
     return int(minRegion);
 }
 
-void GenomeCopyNumber::setSamtools(std::string const& pathToSamtools) {
+void GenomeCopyNumber::setSamtools(std::string const& pathToSamtools, std::string const& SambambaThreads) {
     pathToSamtools_=pathToSamtools;
+    SambambaThreads_ = SambambaThreads;   
+}
+
+void GenomeCopyNumber::setReference(std::string const& pathToReference) {
+    pathToReference_=pathToReference;
 }
 
 void GenomeCopyNumber::setSambamba(std::string const& pathToSambamba, std::string const& SambambaThreads) {
