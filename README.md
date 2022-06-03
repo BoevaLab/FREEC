@@ -21,7 +21,38 @@ Control-FREEC accepts .GZ files. Support of Eland, BED, SOAP, arachne, psl (BLAT
 
 ---------------------------------------------------------------------------------------------------------------------------
 
-**Installation:** To install FREEC, type "make" in the command line. If you are using Linux 32bit, please remove 64bit-tags from the Makefile file before building the program.
+**Installation:** 
+
+To install FREEC, type "make" in the command line. If you are using Linux 32bit, please remove 64bit-tags from the Makefile file before building the program.
+
+Alternatively, you may experiment with a FREEC executable from the **master** branch (w/o locally installed make, C++ compiler) by following the steps:
+1. [Install Docker](https://docs.docker.com/get-docker/).
+2. Get the `knotnote/control-freec:latest` docker image:
+   - if you are using Docker Desktop, follow [these instructions](https://docs.docker.com/desktop/dashboard/#pull-the-latest-image-from-docker-hub)
+   - or from the console: `docker pull knotnote/control-freec:latest`
+3. Get the config file that you plan to use. Add \'/app/data/\' prefix to all data paths.
+   
+   Example:
+
+         [general]
+         chrLenFile = hs18_chr.len
+
+   becomes:
+         
+         [general]
+         chrLenFile = /app/data/hs18_chr.len
+
+4. Run FREEC. Use the following command: 
+   
+   `docker run --rm -it -v path_to_data:/app/data knotnote/control-freec:latest path_to_config_file`
+
+   where:
+
+      - path_to_data - **absolute** path to the directory with input data **and** a configuration file.
+
+      - path_to_config_file - path to the config file, prefixed with '/app/data/'.
+
+If set up correctly, FREEC outputs will be in the `path_to_data/outputDir` folder, where *outputDir* is a parameter from the configuration file.
 
 ---------------------------------------------------------------------------------------------------------------------------
 
