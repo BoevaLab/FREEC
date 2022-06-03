@@ -25,12 +25,17 @@ Control-FREEC accepts .GZ files. Support of Eland, BED, SOAP, arachne, psl (BLAT
 
 To install FREEC, type "make" in the command line. If you are using Linux 32bit, please remove 64bit-tags from the Makefile file before building the program.
 
-Alternatively, you may experiment with a FREEC executable from the **master** branch (w/o locally installed make, C++ compiler) by following the steps:
+Alternatively, you may experiment with a FREEC executable on any OS, w/o installing make and C++ compiler, by following the steps in the **Using Control-FREEC from a container** section.
+
+***Using Control-FREEC from a container***
+
+You may experiment with FREEC using a [Docker image](https://www.docker.com/resources/what-container/), prepared by the project's development team. By default, the image uses a FREEC executable, compiled from the latest code on the **master** branch. Please see [the list of available versions](https://hub.docker.com/repository/docker/knotnote/control-freec/tags?page=1&ordering=last_updated) in case you want to use another version of FREEC.
+
 1. [Install Docker](https://docs.docker.com/get-docker/).
 2. Get the `knotnote/control-freec:latest` docker image:
    - if you are using Docker Desktop, follow [these instructions](https://docs.docker.com/desktop/dashboard/#pull-the-latest-image-from-docker-hub)
    - or from the console: `docker pull knotnote/control-freec:latest`
-3. Get the config file that you plan to use. Add \'/app/data/\' prefix to all data paths.
+3. Get the config file that you plan to use. Modify all file paths to be absolute.
    
    Example:
 
@@ -40,15 +45,28 @@ Alternatively, you may experiment with a FREEC executable from the **master** br
    becomes:
          
          [general]
-         chrLenFile = /app/data/hs18_chr.len
+         chrLenFile = /home/user/data/hs18_chr.len
 
 4. Run FREEC. Use the following command: 
    
-   `docker run --rm -it -v path_to_data:/app/data knotnote/control-freec:latest path_to_config_file`
+   `docker run --rm -t --mount type=bind,source=abs_path_to_data,target=abs_path_to_data knotnote/control-freec:latest abs_path_to_config_file`
 
    where:
 
-      - path_to_data - **absolute** path to the directory with input data **and** a configuration file.
+      - abs_path_to_data - **absolute** path to the directory with input data **and** a configuration file. 
+
+      - abs_path_to_config_file - **absolute** path to the config file.
+
+   The following options are being used:
+
+      - --rm - remove the container after it finishes execution to spare disk space
+      
+      - --mount - bind-mount a local directory into the container. The data is **not exposed** to the Internet and stays on the private machine.
+
+   **NOTE.** If your files are located in different folders, you need to add the \'--mount type=bind,source=<path>,target=<path>\' for each folder.
+
+
+   If set up correctly, FREEC outputs will be in the `outputDir` folder, specified in the configuration file.
 
       - path_to_config_file - path to the config file, prefixed with '/app/data/'.
 
