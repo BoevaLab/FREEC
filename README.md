@@ -68,9 +68,37 @@ You may experiment with FREEC using a [Docker image](https://www.docker.com/reso
 
    If set up correctly, FREEC outputs will be in the `outputDir` folder, specified in the configuration file.
 
-      - path_to_config_file - path to the config file, prefixed with '/app/data/'.
+(optional) 5. Running an interactive experiment.
 
-If set up correctly, FREEC outputs will be in the `path_to_data/outputDir` folder, where *outputDir* is a parameter from the configuration file.
+   If you want to get into the container and modify its contents (for e.g., update the FREEC code and recompile the executable), you may use the following command:
+
+   `docker run -it --name=experiment1 --entrypoint="" --mount type=bind,source=abs_path_to_data,target=abs_path_to_data knotnote/control-freec:latest abs_path_to_config_file bash`
+
+   Here:
+
+   - --name=experiment1 - gives your container a unique name (in case you want to build your own image based on the experiments)
+ 
+   - '--entrypoint=""' and 'bash' - allows to get into the console inside of the container.
+
+   This could also **be useful** for debugging purposes (validate that data is properly mounted, the code version, etc.)
+
+***Creating a new FREEC container version (for developers)***
+
+From the folder with the Dockerfile, please run the command:
+
+   `docker build -t knotnote/control-freec:<FREEC version> .`
+
+To make the image publicly available:
+
+1. Ensure that you have authenticated to the Dockerhub registry:
+
+   `docker login`
+
+2. Push the image:
+
+   `docker push knotnote/control-freec:<FREEC version>`
+
+Note. To push to the *knotnote/control-freec* Dockerhub repository, please ask collaborators to grant you permissions.
 
 ---------------------------------------------------------------------------------------------------------------------------
 
