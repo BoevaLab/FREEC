@@ -22,6 +22,7 @@ http://www.fsf.org/licensing/licenses
 #include "myFunc.h"
 #include <assert.h>
 #include <pthread.h>
+#include "gaussianKernel.h"
 
 #if defined(_WIN32) || (defined(__APPLE__) && defined(__MACH__))
 //x32 Windows definitions
@@ -308,6 +309,7 @@ void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::
 	string name;
 	int value = 0;
 	bool isFai=0;
+    std::cout << "READING CHR LENGTHS" << std::endl;
 	if (chrLenFileName.substr(chrLenFileName.length()-3,3).compare("fai")==0) {isFai=1;}
 	while (std::getline(file,line)) {
 
@@ -336,7 +338,7 @@ void readFileWithGenomeInfo(const std::string &chrLenFileName, std::vector<std::
 		if (value>0) {
 		    names.push_back(name);
             lengths.push_back(value);
-            //cout << name << "\t" << value << "\n";
+            cout << name << "\t" << value << "\n";
 		}
 
 	}
@@ -2739,5 +2741,108 @@ char* getLine(char* buffer, int buffer_size, FILE* stream, std::string& line)
     quartiles.push_back(q2);
     quartiles.push_back(q3);
     return quartiles;
+}
+
+// Added by Gara
+// Function to find first index >= x in a sorted vector
+int lowerIndex(const std::vector<float>& sorted_vector, int n, float x)
+{
+    int l = 0, h = n - 1;
+    while (l <= h) {
+        int mid = (l + h) / 2;
+        if (sorted_vector[mid] >= x) {
+            h = mid - 1;
+        }
+        else {
+            l = mid + 1;
+        }
+    }
+    return l;
+}
+
+// Function to find last index <= y in a sorted vector
+int upperIndex(const std::vector<float>& sorted_vector, int n, float y)
+{
+    int l = 0, h = n - 1;
+    while (l <= h) {
+        int mid = (l + h) / 2;
+        if (sorted_vector[mid] <= y) {
+            l = mid + 1;
+        }
+        else {
+            h = mid - 1;
+        }
+    }
+    return h;
+}
+
+// Function to count elements within given range x-y in a sorted vector
+int countInRange(const std::vector<float>& sorted_vector, int n, float x, float y)
+{
+    // initialize result
+    int count = 0;
+    count = upperIndex(sorted_vector, n, y) - lowerIndex(sorted_vector, n, x) + 1;
+    return count;
+}
+
+// Function that counts how many elements of a vector fall in each bin of bins
+std::vector<float> makeHistogramOfCounts(const std::vector<float>& vec, const std::vector<float>& bins)
+{
+    int n = bins.size();
+    std::cout << "int n = bins.size();" << std::endl;
+    std::vector<float> counts(n-1);
+    std::vector<float> sorted_vector = vec;
+    std::sort(sorted_vector.begin(), sorted_vector.end());
+    for (int i = 0; i < (n-1); i++) {
+        /*std::cout << "Sorted vector: ";
+        for (int j = 0; j < 10; j++) {
+            std::cout << sorted_vector[j] << " ";
+        }
+        std::cout << std::endl;
+        std::cout << "x value: " << bins[i] << std::endl;
+        std::cout << "y value: " << bins[i+1] << std::endl;*/
+        float c = countInRange(sorted_vector, sorted_vector.size(), bins[i], bins[i+1]);
+        counts[i] = c;
+    }
+    return counts;
+}
+
+std::vector<float> gaussianFilter1d(const std::vector<float>& vec, float cov, int size)
+{
+    return applyGaussianKernel(vec, cov, size);
+}
+
+std::map<int, float> findPeaks(const std::vector<float>& counts, float cov, float min_height, int min_distance)
+{
+    int n = counts.size();
+    std::vector<float> filtered_counts(n);
+    filtered_counts = gaussianFilter1d(counts, cov, 4);
+
+    std::map<int, float> peaks;
+    float max_count = 0;
+    for (int i = 0; i < n; i++) {
+        if (filtered_counts[i] > max_count) {
+            max_count = filtered_counts[i];
+            if (filtered_counts[i+1] < max_count) {
+                if (max_count >= min_height) {
+                    if (peaks.empty()) {
+                        peaks[i] = max_count;
+                    } else {
+                        std::map<int, float>::iterator it;
+                        it = --peaks.end();
+                        int distance = i - it->first;
+                        float count = it->second;
+                        if (distance >= min_distance) {
+                            peaks[i] = max_count;
+                        } else if (max_count > count) {
+                            peaks.erase(it->first);
+                            peaks[i] = max_count;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return peaks;
 }
 

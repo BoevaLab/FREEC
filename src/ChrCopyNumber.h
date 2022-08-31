@@ -153,7 +153,39 @@ public:
     void setLookingForSubclones(bool);
     float getSmoothedForInterval(int start , int end);
 
-private:
+    // Added by Gara
+    // For each window, if there is more than one BAF, uniformly sample one BAF
+    void createRatioAndBAFFromSNPs(SNPinGenome& snpingenome);
+    void transformBAFtoMAF();
+    // SES of copy number ratios that are on the same segment. Segment: piece of genome that has the same median ratio
+    void smoothRatioBySegments();
+    // Simple exponential smoothing for ratio and MAF
+    void simpleExponentialSmoothingRatio(const std::vector<float>& segment, int start, int last);
+    void simpleExponentialSmoothingMAF();
+    // Rescale the ratio by the location of the highest peak
+    //float findMaximumPeak();
+    void rescaleRatio(float peak);
+    // Simultaneously filter ratio and MAF in order to get rid of -1 values and in order for the two vectors to have the same length
+    void filterRatioAndMAF();
+    // For printing
+    float getSmoothedRatioAtBin(int i);
+    float getRescaledRatioAtBin(int i);
+    float getRatioPerSNPat(int i);
+    float getBAFPerSNPat(int i);
+    float getMAFPerSNPat(int i);
+    float getSmoothedMAFat(int i);
+    float getMedianRatioPerSNPat(int i);
+    float getFilteredRatioAt(int i);
+    float getFilteredMAFat(int i);
+    int getSNPLength();
+	int getFilteredLength();
+    float getSampledBAFat(int i);
+    float getSampledMAFat(int i);
+    int getSNPPositionAt(int i);
+
+	int getSmoothedRatioSize();
+
+        private:
    // std::vector <std::string> coordinatesTmp_;
 //	std::vector <std::string> endsTmp_;
 //	std::vector <std::string> chr_namestmp;
@@ -199,6 +231,21 @@ private:
     std::vector <float> estimatedBAFuncertainty_;//uncertainty of estimation of BAF for each segment (1./(LL_best-LL_secondBest)))
     std::vector <std::string> BAFsymbPerFrag_; //estimation of BAF for each segment: AA,AAB;AB,AABB etc - one value per fragment
     std::vector <float> estBAFuncertaintyPerFrag_;//uncertainty of estimation of BAF for each segment (1./(LL_best-LL_secondBest))) - one value per fragment
+
+    // Added by Gara
+    std::vector <float> BAF_in_window_;
+    std::vector <float> MAF_in_window_;
+    std::vector<float> BAF_per_SNPs_;
+    std::vector<float> MAF_per_SNPs_;
+    std::vector<float> ratio_per_SNPs_;
+    std::vector<double> smoothed_ratio_;
+    std::vector<double> smoothed_MAF_;
+    std::vector<double> sm_rs_ratio_;
+    std::vector<double> filtered_ratio_;
+    std::vector<double> filtered_MAF_;
+    std::vector<int> fragment_lengths_per_snps_pos_;
+    std::vector<float> median_ratio_per_SNPs_;
+    std::vector<int> SNPs_positions_;
 
 
 };

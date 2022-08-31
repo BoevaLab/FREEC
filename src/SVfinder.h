@@ -35,7 +35,7 @@
 #define NA -1
 #define FileNameLength 281 //maximal length of file name
 #define MaxWordLength 281 // LLIB
-#define Infinity 1000000000000
+#define INFINITY_ 1000000000000
 #define GOODSD 0.5
 #define TELO_CENTRO_FLANCS 50000
 //#define GOODMAPPABILITY 0.85

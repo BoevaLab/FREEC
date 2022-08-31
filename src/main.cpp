@@ -28,9 +28,11 @@ http://www.fsf.org/licensing/licenses
 #include "SeekSubclones.h"
 
 #include "version.h"
+#include <iostream>
 #include <iomanip>
+#include <ctime>
 #include <sstream>
-
+#include <boost/filesystem.hpp>
 
 
 using namespace std ;
@@ -170,7 +172,10 @@ int main(int argc, char *argv[])
 
     print_version();
 
-	const char* conf_file = get_conf_file(argc, argv);
+	//const char* conf_file = "/home/gajaques/Documents/project/config_file_fast.txt";
+//    const char* conf_file = "/home/gajaques/Documents/project/ploidy-purity-cpp/configs/snps-tau5-alpha60.txt";
+    const char* conf_file = get_conf_file(argc, argv);
+
 
 	ConfigFile cf(conf_file);
 
@@ -306,6 +311,18 @@ int main(int argc, char *argv[])
     }
 
 	string outputDir = (std::string)cf.Value("general","outputDir",".");
+
+    auto t = std::time(nullptr);
+    auto tm = *std::localtime(&t);
+
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%d-%m-%Y-%H-%M-%S");
+    outputDir = outputDir + '-' + oss.str();
+    boost::filesystem::create_directories(outputDir);
+    std::cout << "Created output DIR: " << outputDir << std::endl;
+    string logFile = outputDir + "/runtime_logs.txt";
+    string logFileErr = outputDir + "/stderr_logs.txt";
+
 	if ( access( outputDir.c_str(), 0 ) == 0 )    {
             struct stat status;
             stat( outputDir.c_str(), &status );
@@ -321,6 +338,16 @@ int main(int argc, char *argv[])
             cerr << "Error: Path "<<outputDir<<" doesn't exist." << endl;
             exit(-1);
     }
+
+    boost::filesystem::copy_file(conf_file, outputDir+"/"+"freec_config.txt");
+    std::cout << "Configuration is saved to:\t" << outputDir+"/"+"freec_config.txt" << std::endl;
+
+    std::cout << logFileErr << " - subsequent stderr is redirected here" << std::endl;
+    freopen(logFileErr.c_str(),"w",stderr);
+    
+    std::cout << logFile << " - subsequent stdout is redirected here" << std::endl;
+    freopen(logFile.c_str(),"w",stdout);
+
 
 	bool has_dirWithFastaSeq = cf.hasValue("general","chrFiles");
     string dirWithFastaSeq = (std::string)cf.Value("general","chrFiles","");
@@ -794,6 +821,10 @@ int main(int argc, char *argv[])
         makingPileup = true;
     }
 
+    int dataSubsamplingRateInPuritySearch = (int)cf.Value("bayesopt","dataSubsamplingRateInPuritySearch",1000);
+    int dataSubsamplingRateInPloidyEvaluation = (int)cf.Value("bayesopt","dataSubsamplingRateInPloidyEvaluation",50);
+    bool doRescaleRatio = (std::string)cf.Value("bayesopt","doRescaleRatio","true") == "true" ? true : false;
+
 	GenomeCopyNumber sampleCopyNumber;
 	sampleCopyNumber.setSamtools(pathToSamtools, SambambaThreads);
 	sampleCopyNumber.setSambamba(pathToSambamba, SambambaThreads);
@@ -802,6 +833,9 @@ int main(int argc, char *argv[])
 	sampleCopyNumber.setmakingPileup(makingPileup);
 
     sampleCopyNumber.setIfLogged(logLogNorm);
+    sampleCopyNumber.setDataSubsamplingRateInPuritySearch(dataSubsamplingRateInPuritySearch);
+    sampleCopyNumber.setDataSubsamplingRateInPloidyEvaluation(dataSubsamplingRateInPloidyEvaluation);
+    sampleCopyNumber.setDoRescaleRatio(doRescaleRatio);
 
 	GenomeCopyNumber controlCopyNumber;
 	controlCopyNumber.setSamtools(pathToSamtools, SambambaThreads);
@@ -1110,31 +1144,31 @@ int main(int argc, char *argv[])
     }
 
 
-    int bestPloidy= ploidies[min_element(RSS.begin(),RSS.end())-RSS.begin()];
-    cout << "..Best ploidy set to "<<bestPloidy << " according to the RSS score"<<endl;
-    int secondBest= ploidies[max_element(percentage_GenExpl.begin(),percentage_GenExpl.end())-percentage_GenExpl.begin()];
-    cout << "..Best ploidy could have been set to "<<secondBest << " according to the percentage of the copy number changes explained by a model with a given ploidy"<<endl;
+    // int bestPloidy= ploidies[min_element(RSS.begin(),RSS.end())-RSS.begin()];
+    // cout << "..Best ploidy set to "<<bestPloidy << " according to the RSS score"<<endl;
+    // int secondBest= ploidies[max_element(percentage_GenExpl.begin(),percentage_GenExpl.end())-percentage_GenExpl.begin()];
+    // cout << "..Best ploidy could have been set to "<<secondBest << " according to the percentage of the copy number changes explained by a model with a given ploidy"<<endl;
 
-    if (bestPloidy==4 && std::find(ploidies.begin(), ploidies.end(), 2) != ploidies.end()) {
-        int ind2=std::find(ploidies.begin(), ploidies.end(), 2)-ploidies.begin();
-        int ind4=std::find(ploidies.begin(), ploidies.end(), 4)-ploidies.begin();
+    // if (bestPloidy==4 && std::find(ploidies.begin(), ploidies.end(), 2) != ploidies.end()) {
+    //     int ind2=std::find(ploidies.begin(), ploidies.end(), 2)-ploidies.begin();
+    //     int ind4=std::find(ploidies.begin(), ploidies.end(), 4)-ploidies.begin();
 
-        if (percentage_GenExpl[ind4]-percentage_GenExpl[ind2]<0.05 || unexplainedChromosomes[ind2]<=1) {
-            bestPloidy=2;
-            cout << "..Changed ploidy to 2 as there is little difference in the fit betweeen ploidies 4 and 2:" << endl;
-            cout << "unexplained regions for ploidy 2 are located on " <<unexplainedChromosomes[ind2]<< " chromosomes"<< endl;
-        }
-    }
+    //     if (percentage_GenExpl[ind4]-percentage_GenExpl[ind2]<0.05 || unexplainedChromosomes[ind2]<=1) {
+    //         bestPloidy=2;
+    //         cout << "..Changed ploidy to 2 as there is little difference in the fit betweeen ploidies 4 and 2:" << endl;
+    //         cout << "unexplained regions for ploidy 2 are located on " <<unexplainedChromosomes[ind2]<< " chromosomes"<< endl;
+    //     }
+    // }
 
 
 
-    if (bestPloidy!=ploidies.back()) {
-        cout << "..Running FREEC with ploidy set to " << bestPloidy << "\n";
-        isSuccessfulFit=runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
-        degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
-        teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,makePileup,seekSubclones,
-         myName,unexplainedChromosomes, CompleteGenomicsData,normalization);
-    }
+    // if (bestPloidy!=ploidies.back()) {
+    //     cout << "..Running FREEC with ploidy set to " << bestPloidy << "\n";
+    //     isSuccessfulFit=runWithDefinedPloidy(bestPloidy,sampleCopyNumber,controlCopyNumber,isControlIsPresent,forceGC,has_BAF,ifTargeted,WESanalysis,
+    //     degree,intercept,logLogNorm,minExpectedGC,maxExpectedGC,knownContamination,breakPointThreshold,breakPointType,minCNAlength,
+    //     teloCentroFlanks, RSS,percentage_GenExpl,contaminationAdjustment,contamination, thrPool,thrPoolManager,makePileup,seekSubclones,
+    //      myName,unexplainedChromosomes, CompleteGenomicsData,normalization);
+    // }
 
     double breakPointThreshold_BAF=1;
 	if (has_BAF || makePileup != "false" || isHasMiniPileUPsample) {
@@ -1194,7 +1228,35 @@ int main(int argc, char *argv[])
 	if (ifBedGraphOutPut) {
             sampleCopyNumber.printRatio(myName+"_ratio.BedGraph",1,printNA);
     }
-	sampleCopyNumber.printCNVs(myName+"_CNVs");
+    sampleCopyNumber.printCNVs(myName+"_CNVs");
+
+    // HERE
+    // Write the code to use the smoothing here
+    // Siyuan scripts to translate:
+    // Data pre-processing, smoothing and rescaling
+    sampleCopyNumber.preprocessing(snpingenome);
+    bool has_smoothed_ratio = true;
+    bool has_MAF = true;
+    sampleCopyNumber.printRatioAfterPreprocessing(myName+"_sm_rs_ratio_sm_maf_SNPs.txt");
+
+    // GMM and Gaussian process for purity optimisation for a fixed ploidy
+
+
+    auto start = std::chrono::high_resolution_clock::now();
+    std::map<int, std::pair<double, double>> bestResult = findBestPurity(sampleCopyNumber, ploidies, cf, outputDir);
+    int bestTau = bestResult.begin()->first;
+    double bestPurity = bestResult.begin()->second.second;
+    double bestScore = bestResult.begin()->second.first;
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    if (ploidies.size() == 1){
+        cout << "findBestPurity with tau:\t" << bestTau << "\ttook " << duration.count()  << " s" << endl;
+    } else {
+        cout << "findBestPurity for set of ploidies of size:\t" << ploidies.size() << "\ttook " << duration.count()  << " s" << endl;
+    }
+    std::cout << "Best score: " << bestScore << "\nBEST purity/ploidy: " << bestPurity << "/" << bestTau << endl;
+
+    // END
 
 	//printing parameters and summary into the Information file easy to parse
 	std::ofstream file ((myName+"_info.txt").c_str());
