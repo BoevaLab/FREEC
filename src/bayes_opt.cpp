@@ -58,7 +58,7 @@ struct Params
     };
 };
 
-double my_eval_func(int tau, double alpha, GenomeCopyNumber genomeCopyNumber)
+double optim_scoring_func(int tau, double alpha, GenomeCopyNumber genomeCopyNumber)
 {
     auto start = std::chrono::high_resolution_clock::now();
     double score = genomeCopyNumber.processGMM("/tmp/res-" + std::to_string(tau) + "-" + std::to_string(alpha), tau, alpha, true, genomeCopyNumber.getDataSubsamplingRateInPuritySearch(), false);
@@ -99,7 +99,7 @@ struct eval_func
     Eigen::VectorXd operator()(const Eigen::VectorXd &x) const
     {
         double alpha = x(0);
-        double score = my_eval_func(tau, alpha, genomeCopyNumber);
+        double score = optim_scoring_func(tau, alpha, genomeCopyNumber);
         return tools::make_vector(score);
     }
 };

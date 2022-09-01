@@ -4600,13 +4600,8 @@ bool take_subsample_flag, int take_each_nth_element_for_gmm_fit, bool usePenalty
 
 
     GenomeGMM sampleGMM;
-    auto start = std::chrono::high_resolution_clock::now();
     fixExpectedRatioAndMAF(sampleGMM, genome_ratio_full, genome_maf_smoothed_full, tau, alpha);
     sampleGMM.printExpectedRatioAndMAF(outFile, tau, alpha);
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
-#pragma omp critical
-    cout << "fixExpectedRatioAndMAF with tau/alpha:\t" << tau << " / " << alpha << "\ttook " << duration.count()  << " s" << endl;
 
     std::vector<float> genome_ratio_smoothed;
     std::vector<float> genome_maf_smoothed;
@@ -4628,10 +4623,10 @@ bool take_subsample_flag, int take_each_nth_element_for_gmm_fit, bool usePenalty
     std::cout << "take_subsample_flag:\t" << take_subsample_flag << std::endl;
     std::cout << "Size of genome_maf_smoothed for fitting:\t" << genome_maf_smoothed.size() << "\t\% of full:\t" << (float)genome_maf_smoothed.size() / genome_maf_smoothed_full.size()<< std::endl;
 
-    start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     double bestL = sampleGMM.fitPredict(tau, alpha, genome_ratio_smoothed, genome_maf_smoothed);
-    stop = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 #pragma omp critical
     cout << "fitPredict with tau/alpha:\t" << tau << " / " << alpha << "\ttook " << duration.count()  << " s" << endl;
 

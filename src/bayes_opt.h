@@ -18,7 +18,7 @@ struct Params;
 double concrete_eval_func(double alpha, const Eigen::MatrixXd &data);
 
 
-double my_eval_func(int tau, double alpha, const std::vector<float>& ratio,
+double optim_scoring_func(int tau, double alpha, const std::vector<float>& ratio,
                   const std::vector<float>& maf, GenomeGMM sampleGMM);
 
 
