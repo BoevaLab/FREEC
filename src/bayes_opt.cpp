@@ -122,11 +122,8 @@ void misc_eval(GenomeCopyNumber genomeCopyNumber, int tau, double alpha)
 
 std::map<int, std::pair<double, double>> findBestPurity(GenomeCopyNumber &sampleCopyNumber, std::vector<int> ploidies, ConfigFile &cf, std::string outputDir)
 {
-    // TMP
     int optimObjectiveCalls = (int)cf.Value("bayesopt", "optimObjectiveCalls", 1);
     double kernelNoise = (double)cf.Value("bayesopt", "kernelNoise", 1e-10);
-    double truePurity = (double)cf.Value("bayesopt", "truePurity", 0.5);
-    bool runTruePurity = (bool)cf.Value("bayesopt", "runTruePurity", false);
     Params::stop_maxiterations::set_iterations(optimObjectiveCalls);
     Params::kernel::set_noise(kernelNoise);
     Params::bayes_opt_bobase::set_base_dir(outputDir);
@@ -152,73 +149,32 @@ std::map<int, std::pair<double, double>> findBestPurity(GenomeCopyNumber &sample
     std::map<int, std::pair<double, double>> best_score_alpha_per_tau;
     std::map<int, std::pair<double, double>> best_result;
 
-    if (runTruePurity == true && truePurity != 0.5)
-    {
-        int truePloidy = (int)cf.Value("bayesopt", "truePloidy", 0);
-        if (truePloidy == 0) {std::cout << "truePloidy not provided. Skipping evaluation for the correct pair" << std::endl;}
-        else {
-        std::cout << "/* misc_eval(sampleCopyNumber, truePloidy, truePurity); */" << std::endl;
-        std::cout << "/* misc_eval(sampleCopyNumber, " << truePloidy << ", " << truePurity << "); */" << std::endl;
-        misc_eval(sampleCopyNumber, truePloidy, truePurity);
-        }
-    }
-    else if (runTruePurity == true)
-    {
-        std::cout << "/* runTruePurity == true BUT truePurity is NOT supplied */" << std::endl;
-    }
+    omp_lock_t lck;
+    omp_init_lock(&lck);
 
-    std::vector<double> queryPurities;
-    std::vector<std::string> strs;
-    std::string queryPurities_str = (std::string)cf.Value("bayesopt", "queryPurities", "");
-    split(queryPurities_str, ',', strs);
-    if (strs.size() > 1)
+#pragma omp parallel num_threads(ploidies.size())
     {
-        std::cout << "QUERY sample purities";
-        for (unsigned int i = 0; i < strs.size(); i++)
+#pragma omp for
+        for (int tau : ploidies)
         {
-            queryPurities.push_back(std::stod(strs[i].c_str()));
-            std::cout << "/* misc_eval(sampleCopyNumber, " << ploidies.at(0) << ", " << queryPurities.back() << "); */" << std::endl;
-            misc_eval(sampleCopyNumber, ploidies.at(0), queryPurities.back());
+            std::string dir_with_results_prefix = "ploidy_" + std::to_string(tau) + "_optim_results_";
+            omp_set_lock(&lck);
+            Params::bayes_opt_bobase::set_dir_with_results_prefix(dir_with_results_prefix);
+            bayes_opt::BOptimizer<Params, modelfun<gp_t>, acquifun<acqui_t>,
+                                acquiopt<acqui_opt_t>, initfun<init_t>, statsfun<stat_t>>
+                boptimizer;
+            omp_unset_lock(&lck);
+            boptimizer.optimize(eval_func<Params>(tau, sampleCopyNumber));
+
+            std::string filename = boptimizer.res_dir() + "/tau-" + std::to_string(tau) + "-alpha-" + std::to_string(boptimizer.best_sample()(0));
+            std::ofstream(filename.c_str());
+
+#pragma omp critical
+            best_score_alpha_per_tau.insert({tau, std::make_pair(boptimizer.best_observation()(0), boptimizer.best_sample()(0))});
         }
-        exit(0);
     }
-    else
-    {
-        std::cout << "Skipping QUERY sample purities: " << queryPurities_str << std::endl;
-    }
-
-    bool queryPloidies = (bool)cf.Value("bayesopt", "queryPloidies", false);
-    if (queryPloidies){
-        for (int tau : ploidies){
-            best_score_alpha_per_tau.insert({tau, std::make_pair(1, truePurity)});
-        }
-    } else {
-        omp_lock_t lck;
-        omp_init_lock(&lck);
-
-    #pragma omp parallel num_threads(ploidies.size())
-        {
-    #pragma omp for
-            for (int tau : ploidies)
-            {
-                std::string dir_with_results_prefix = "ploidy_" + std::to_string(tau) + "_optim_results_";
-                omp_set_lock(&lck);
-                Params::bayes_opt_bobase::set_dir_with_results_prefix(dir_with_results_prefix);
-                bayes_opt::BOptimizer<Params, modelfun<gp_t>, acquifun<acqui_t>,
-                                    acquiopt<acqui_opt_t>, initfun<init_t>, statsfun<stat_t>>
-                    boptimizer;
-                omp_unset_lock(&lck);
-                boptimizer.optimize(eval_func<Params>(tau, sampleCopyNumber));
-
-                std::string filename = boptimizer.res_dir() + "/tau-" + std::to_string(tau) + "-alpha-" + std::to_string(boptimizer.best_sample()(0));
-                std::ofstream(filename.c_str());
-
-    #pragma omp critical
-                best_score_alpha_per_tau.insert({tau, std::make_pair(boptimizer.best_observation()(0), boptimizer.best_sample()(0))});
-            }
-        }
-        omp_destroy_lock(&lck);
-    }
+    omp_destroy_lock(&lck);
+    
     float best_purity = -INFINITY;
     float best_score = -INFINITY;
     float best_tau = -1;
