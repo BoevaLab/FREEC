@@ -291,16 +291,9 @@ double GenomeGMM::computeLoss(int n)
     return likelihood;
 }
 
-double GenomeGMM::fitPredict(int tau, float alpha, const std::vector<float>& ratio, const std::vector<float>& maf)
+double GenomeGMM::fitPredict(int tau, float alpha, const std::vector<float>& ratio, const std::vector<float>& maf, int maxIterGMM)
 {
-    // TMP
-    #ifdef CLUSTER
-        ConfigFile cf("/cluster/home/kzaitse/custom_configs/freec_configs/meta-config.txt");
-    #else
-        ConfigFile cf("/local/home/kzaitse/lab/custom_configs/freec_configs/meta-config.txt");
-    #endif // !CLUSTER
-	int maxIter = (int)cf.Value("gmm", "maxIter", 1);
-    initialiseGMMParameters(1, maxIter, 2000, 1.0e-7, 1, false, 0.0, 0.01, 0.0, 0.015);
+    initialiseGMMParameters(1, maxIterGMM, 1000, 1.0e-7, 1, false, 0.0, 0.01, 0.0, 0.015);
 	
     if (noise_ == 1) {
 		expected_ratio_.push_back(1.0);

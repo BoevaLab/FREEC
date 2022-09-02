@@ -39,7 +39,7 @@ public:
     double initialiseWeight();
     std::vector<double> calculateMarginalResponsabilities(int n);
     double computeLoss(int n);
-    double fitPredict(int tau, float alpha, const std::vector<float>& ratio, const std::vector<float>& maf);
+    double fitPredict(int tau, float alpha, const std::vector<float>& ratio, const std::vector<float>& maf, int maxIterGMM);
     
     
     // Get methods

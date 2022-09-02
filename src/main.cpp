@@ -821,8 +821,9 @@ int main(int argc, char *argv[])
         makingPileup = true;
     }
 
-    int dataSubsamplingRateInPuritySearch = (int)cf.Value("bayesopt","dataSubsamplingRateInPuritySearch",1000);
-    int dataSubsamplingRateInPloidyEvaluation = (int)cf.Value("bayesopt","dataSubsamplingRateInPloidyEvaluation",50);
+    int dataSubsamplingRateInPuritySearch = (int)cf.Value("bayesopt","dataSubsamplingRateInPuritySearch",700);
+    int dataSubsamplingRateInPloidyEvaluation = (int)cf.Value("bayesopt","dataSubsamplingRateInPloidyEvaluation",2);
+    int maxIterGMM = (int)cf.Value("gmm","maxIter",8);
     bool doRescaleRatio = (std::string)cf.Value("bayesopt","doRescaleRatio","true") == "true" ? true : false;
 
 	GenomeCopyNumber sampleCopyNumber;
@@ -835,6 +836,7 @@ int main(int argc, char *argv[])
     sampleCopyNumber.setIfLogged(logLogNorm);
     sampleCopyNumber.setDataSubsamplingRateInPuritySearch(dataSubsamplingRateInPuritySearch);
     sampleCopyNumber.setDataSubsamplingRateInPloidyEvaluation(dataSubsamplingRateInPloidyEvaluation);
+    sampleCopyNumber.setMaxIterGMM(maxIterGMM);
     sampleCopyNumber.setDoRescaleRatio(doRescaleRatio);
 
 	GenomeCopyNumber controlCopyNumber;

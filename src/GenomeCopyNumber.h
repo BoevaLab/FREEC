@@ -132,6 +132,7 @@ public:
     void setDataSubsamplingRateInPuritySearch(int dataSubsamplingRateInPuritySearch);
     void setDataSubsamplingRateInPloidyEvaluation(int dataSubsamplingRateInPloidyEvaluation);
     void setDoRescaleRatio(bool doRescaleRatio);
+    void setMaxIterGMM(int maxIterGMM);
 
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
@@ -143,6 +144,7 @@ public:
     bool isMappUsed();
     int getDataSubsamplingRateInPuritySearch();
     int getDataSubsamplingRateInPloidyEvaluation();
+    int getMaxIterGMM();
 
     // Added by Gara
     float findMaximumPeak(std::vector<float> total_ratio);
@@ -171,9 +173,12 @@ private:
     bool isRatioLogged_;
 
 	void fillMyHash(std::string const& mateFileName , std::string const& inputFormat, std::string const& matesOrientation, int windowSize, int step, std::string targetBed = "");
+
     int  dataSubsamplingRateInPuritySearch;
     int  dataSubsamplingRateInPloidyEvaluation;
     bool doRescaleRatio;
+    int  maxIterGMM;
+
 	int windowSize_;
 	int step_;
 	long totalNumberOfPairs_;

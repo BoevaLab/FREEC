@@ -35,9 +35,10 @@ GenomeCopyNumber::GenomeCopyNumber(void)
     isMappUsed_=false;
     totalNumberOfPairs_=0;
     normalNumberOfPairs_=0;
-    dataSubsamplingRateInPuritySearch = 1000;
-    dataSubsamplingRateInPloidyEvaluation = 50;
+    dataSubsamplingRateInPuritySearch = 700;
+    dataSubsamplingRateInPloidyEvaluation = 2;
     doRescaleRatio=true;
+    maxIterGMM=8;
 }
 
 bool GenomeCopyNumber::isMappUsed() {return isMappUsed_;}
@@ -4368,6 +4369,11 @@ void GenomeCopyNumber::setDataSubsamplingRateInPloidyEvaluation(int _dataSubsamp
     dataSubsamplingRateInPloidyEvaluation = _dataSubsamplingRateInPloidyEvaluation;
 }
 
+void GenomeCopyNumber::setMaxIterGMM(int _maxIterGMM)
+{
+    maxIterGMM = _maxIterGMM;
+}
+
 int GenomeCopyNumber::getDataSubsamplingRateInPuritySearch()
 {
     return dataSubsamplingRateInPuritySearch;
@@ -4376,6 +4382,11 @@ int GenomeCopyNumber::getDataSubsamplingRateInPuritySearch()
 int GenomeCopyNumber::getDataSubsamplingRateInPloidyEvaluation()
 {
     return dataSubsamplingRateInPloidyEvaluation;
+}
+
+int GenomeCopyNumber::getMaxIterGMM()
+{
+    return maxIterGMM;
 }
 
 void GenomeCopyNumber::setDoRescaleRatio(bool _doRescaleRatio)
@@ -4624,7 +4635,7 @@ bool take_subsample_flag, int take_each_nth_element_for_gmm_fit, bool usePenalty
     std::cout << "Size of genome_maf_smoothed for fitting:\t" << genome_maf_smoothed.size() << "\t\% of full:\t" << (float)genome_maf_smoothed.size() / genome_maf_smoothed_full.size()<< std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
-    double bestL = sampleGMM.fitPredict(tau, alpha, genome_ratio_smoothed, genome_maf_smoothed);
+    double bestL = sampleGMM.fitPredict(tau, alpha, genome_ratio_smoothed, genome_maf_smoothed, maxIterGMM);
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::seconds>(stop - start);
 #pragma omp critical

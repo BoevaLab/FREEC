@@ -122,7 +122,7 @@ void misc_eval(GenomeCopyNumber genomeCopyNumber, int tau, double alpha)
 
 std::map<int, std::pair<double, double>> findBestPurity(GenomeCopyNumber &sampleCopyNumber, std::vector<int> ploidies, ConfigFile &cf, std::string outputDir)
 {
-    int optimObjectiveCalls = (int)cf.Value("bayesopt", "optimObjectiveCalls", 1);
+    int optimObjectiveCalls = (int)cf.Value("bayesopt", "optimObjectiveCalls", 7);
     double kernelNoise = (double)cf.Value("bayesopt", "kernelNoise", 1e-10);
     Params::stop_maxiterations::set_iterations(optimObjectiveCalls);
     Params::kernel::set_noise(kernelNoise);
@@ -209,8 +209,6 @@ std::map<int, std::pair<double, double>> findBestPurity(GenomeCopyNumber &sample
         }
     }
     }
-
-    std::cout << "DIFF with TRUE purity:\t" << abs(truePurity - best_purity) << std::endl;
 
     best_result.insert({best_tau, std::make_pair(best_score, best_purity)});
     return best_result;
