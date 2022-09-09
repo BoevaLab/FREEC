@@ -4663,6 +4663,8 @@ bool take_subsample_flag, int take_each_nth_element_for_gmm_fit, bool usePenalty
     }
     cout << "PENALTY with tau/alpha:\t" << tau << " / " << alpha << "\t-\t" << penalty << endl;
     double finalScore = (bestL - penalty);
+    double scoreDownscalingCoef = 1e-5;
+    finalScore = finalScore * scoreDownscalingCoef;
     return finalScore;
 }
 
