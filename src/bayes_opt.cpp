@@ -33,7 +33,7 @@ struct Params
 
     struct acqui_ei : public defaults::acqui_ei
     {
-        BO_PARAM(double, jitter, 0.05);
+        BO_PARAM(double, jitter, 0.01);
     };
 
     struct init_randomsampling

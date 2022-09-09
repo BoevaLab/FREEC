@@ -208,7 +208,7 @@ private:
                     int N,
                     float threshold_empty = 5e-3,
                     float threshold_noise = 0.1,
-                    int C = 7500);
+                    int C = 1500);
 };
 #endif
 
