@@ -1,5 +1,7 @@
 # Control-FREEC
 Copy number and genotype annotation from whole genome and whole exome sequencing data.
+
+Complete tutorial on how to run FREEC: http://boevalab.inf.ethz.ch/FREEC/tutorial.html
   
 ---------------------------------------------------------------------------------------------------------------------------
 
