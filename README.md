@@ -27,6 +27,16 @@ Control-FREEC accepts .GZ files. Support of Eland, BED, SOAP, arachne, psl (BLAT
 
 ---------------------------------------------------------------------------------------------------------------------------
 
+**Running the compiled version:** 
+
+'PathToFREEC/freec -conf myConfig.txt -sample sample.bam -control control.bam'
+
+or
+
+'PathToFREEC/freec -conf myConfig.txt' if BAM files are provided in the config file.
+
+---------------------------------------------------------------------------------------------------------------------------
+
 To cite please use:
 
 Boeva V, Zinovyev A, Bleakley K, Vert JP, Janoueix-Lerosey I, Delattre O, Barillot E. (2011) Control-free calling of copy number alterations in deep-sequencing data using GC-content normalization. Bioinformatics 2011; 27(2):268-9. PMID: 21081509.
