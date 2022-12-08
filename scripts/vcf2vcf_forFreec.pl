@@ -69,6 +69,7 @@ if ($filename =~ /.gz$/) {
 
 # to (Freq >0.01 by default; $minFreq) and keep only single nucleotide variants ($keepSingleOnly)
 
+##INFO=<ID=MUT,Number=0,Type=Flag,Description="Is mutation (journal citation, explicit fact): a low frequency variation that is cited in journal and other reputable sources">
 #chr1	10177	rs367896724	A	T	.	.	RS=367896724;TOPMED=0.76728147298674821,0.23271852701325178
 #chr1	10352	rs555500075	T	G	.	.	RS=555500075;TOPMED=0.86356396534148827,0.13643603465851172
 
@@ -83,7 +84,7 @@ my($dot,$dot2,$info,$AltAllele);
 
 while (<FILE>) {	
     $lines++;
-    next if (m/^\#\#/);
+    if (m/^\#/) {print $_ ; next;}
     chomp;
     ($chr,$start,$ID,$refAllele,$AltAllele,$dot,$dot2,$info) = split /\t/;      
     $totalCount++;    
@@ -122,4 +123,3 @@ close FILE;
 
 
 print STDERR "Read: $filename\tlines: $lines;\ttotal sites: $totalCount\taccepted sites: $numberOfSites\n";
-
