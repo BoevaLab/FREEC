@@ -17,17 +17,17 @@ ifeq (aarch64,$(shell uname -m))
         M64_FLAG =
 endif
 
+INCLUDE = -I./include/
 
+CXXFLAGS = $(CXXOPT) $(EXTRA_CXXFLAGS) $(INCLUDE) -Wall $(M64_FLAG)
 
-CXXFLAGS = $(CXXOPT) $(EXTRA_CXXFLAGS) -Wall $(M64_FLAG)
-
-MAKEDEPEND = gcc -M $(EXTRA_CXXFLAGS)
+MAKEDEPEND = gcc -M $(EXTRA_CXXFLAGS) $(INCLUDE)
 
 PROG = freec
 
 all: $(PROG)
 
-$(PROG): main.o ConfigFile.o Chameleon.o GenomeDensity.o Help.o myFunc.o KernelVector.o ChrDensity.o ChrCopyNumber.o GenomeCopyNumber.o chisquaredistr.o ap.o igammaf.o gammafunc.o normaldistr.o ablasf.o ablas.o ortfac.o sblas.o rotations.o reflections.o linreg.o hblas.o descriptivestatistics.o creflections.o blas.o bdsvd.o svd.o ialglib.o EntryCNV.o SNPinGenome.o SNPatChr.o SNPposition.o binomialdistr.o ibetaf.o ThreadPool.o BAFpileup.o SeekSubclones.o
+$(PROG): main.o ConfigFile.o Chameleon.o GenomeDensity.o Help.o myFunc.o KernelVector.o ChrDensity.o ChrCopyNumber.o GenomeCopyNumber.o chisquaredistr.o ap.o igammaf.o gammafunc.o normaldistr.o ablasf.o ablas.o ortfac.o sblas.o rotations.o reflections.o linreg.o hblas.o descriptivestatistics.o creflections.o blas.o bdsvd.o svd.o ialglib.o EntryCNV.o SNPinGenome.o SNPatChr.o SNPposition.o binomialdistr.o ibetaf.o ThreadPool.o BAFpileup.o SeekSubclones.o GenomeGMM.o gaussianKernel.o cumNormalDistr.o MixtureComponent.o
 	 g++ $(M64_FLAG) $(CXXOPT) -o $(PROG) $+ $(EXTRA_LDFLAGS)
 
 init:

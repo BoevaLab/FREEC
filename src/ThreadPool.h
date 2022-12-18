@@ -109,7 +109,6 @@ public:
 	usleep(WAIT_USECONDS);
 #endif
 
-	usleep(WAIT_USECONDS);
 	pthread_mutex_lock(&mp);
 	if (state == FINISHED) {
 	  pthread_mutex_unlock(&mp);

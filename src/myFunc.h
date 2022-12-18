@@ -16,6 +16,7 @@
 #include "linreg.h"
 #include "normaldistr.h"
 #include <string.h>
+#include <map>
 
 #ifndef NA
 #define NA -1
@@ -32,7 +33,7 @@
 #define HOMOZYG_MEAN 0.11
 #define middleComponentMinWeight 0.1
 
- #define pi 3.14159
+ #define PI_ 3.14159
  #define ZERO 0.0000000001
  #define MAX_BUFFER 2048
 
@@ -152,6 +153,17 @@ std::vector<float> get_quartiles(std::vector<float> vect);
 
 int calculateTotalLength(std::vector <int> lefts,std::vector <int> rights);
 bool checkChrLen(const std::string &chrLenFile,const std::string &targetBed) ;
+
+// Added by Gara
+// Functions useful for making the histogram
+int lowerIndex(const std::vector<float>& sorted_vector, int n, float x);
+int upperIndex(const std::vector<float>& sorted_vector, int n, float y);
+int countInRange(const std::vector<float>& sorted_vector, int n, float x, float y);
+std::vector<float> makeHistogramOfCounts(const std::vector<float>& vec, const std::vector<float>& bins);
+std::vector<float> gaussianFilter1d(const std::vector<float>& vec, float cov, int size = 4);
+std::map<int, float> findPeaks(const std::vector<float>& freqs, float cov, float min_height, int min_distance);
+
+
 
 #ifdef _WIN32
 double expm1(double x);

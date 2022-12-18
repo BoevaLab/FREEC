@@ -20,6 +20,9 @@ http://www.fsf.org/licensing/licenses
 
 
 #include "ChrCopyNumber.h"
+#include<random>
+#include <sstream>
+#include <algorithm>
 
 using namespace std ;
 
@@ -1773,3 +1776,401 @@ void* ChrCopyNumber_calculateBAFBreakpoint_wrapper(void *arg)
   }
   return NULL;
 }
+
+
+// Added by Gara
+/*
+void ChrCopyNumber::sampleBAFinWindow()
+{
+    for (unsigned int i = 0; i < BAFvalues_.size(); i++) {
+        std::random_device r;
+        std::string baf = BAFvalues_[i];
+        if (baf == "") {
+            BAF_in_window_.push_back(-1);
+        } else {
+            if (baf.find(';') == std::string::npos) {
+                BAF_in_window_.push_back(std::stof(baf));
+            } else {
+                std::vector<float> bafs_in_window;
+                std::string segment;
+                std::stringstream bafs;
+                bafs << baf;
+                while(std::getline(bafs, segment, ';')) {
+                    bafs_in_window.push_back(std::stof(segment));
+                }
+                std::default_random_engine e1(r());
+                std::uniform_int_distribution<> unif(1, bafs_in_window.size());
+                BAF_in_window_.push_back(bafs_in_window[(unif(e1)-1)]);
+            }
+        }
+    }
+}
+*/
+
+/*
+void ChrCopyNumber::createRatioAndBAFFromSNPs(SNPinGenome& snpingenome)
+{
+    std::cout << "Chromosome: " << chromosome_ << std::endl;
+    int start = 0;
+    int end = 0;
+    for (unsigned int i = 0; i < BAFvalues_.size(); i++) {
+        std::string baf = BAFvalues_[i];
+        if (baf == "") {
+            // do nothing
+        } else {
+            float r = ratio_[i];
+            float m = medianProfile_[i];
+            if (r != -1) {
+                if (baf.find(';') == std::string::npos) {
+                    BAF_per_SNPs_.push_back(std::stof(baf));
+                    ratio_per_SNPs_.push_back(r);
+                    median_ratio_per_SNPs_.push_back(m);
+
+                    // Calculate fragment length
+                    if (median_ratio_per_SNPs_.size() >= 2) {
+                        if (median_ratio_per_SNPs_.rbegin()[0] != median_ratio_per_SNPs_.rbegin()[1]) {
+                            end = median_ratio_per_SNPs_.size() - 1;
+                            int frag_length = end - start;
+                            fragment_lengths_per_snps_pos_.push_back(frag_length);
+                            start = end;
+                        }
+                    }
+                } else {
+                    std::vector<float> bafs_in_window;
+                    std::string segment;
+                    std::stringstream bafs;
+                    bafs << baf;
+                    while(std::getline(bafs, segment, ';')) {
+                        bafs_in_window.push_back(std::stof(segment));
+                    }
+                    for (int j = 0; j < bafs_in_window.size(); j++) {
+                        BAF_per_SNPs_.push_back(bafs_in_window[j]);
+                        ratio_per_SNPs_.push_back(r);
+                        median_ratio_per_SNPs_.push_back(m);
+                    }
+                    // Calculate fragment length
+                    int j = bafs_in_window.size() - 1;
+                    if (median_ratio_per_SNPs_.size() > (j+1)) {
+                        if (median_ratio_per_SNPs_.rbegin()[0] != median_ratio_per_SNPs_.rbegin()[j+1]) {
+                            end = median_ratio_per_SNPs_.size() - j - 1;
+                            int frag_length = end - start;
+                            fragment_lengths_per_snps_pos_.push_back(frag_length);
+                            start = end;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    int frag_length = median_ratio_per_SNPs_.size() - start;
+    fragment_lengths_per_snps_pos_.push_back(frag_length);
+
+    std::cout << "Fragments length: ";
+    for (int f = 0; f < fragment_lengths_per_snps_pos_.size(); f++) {
+        std::cout << fragment_lengths_per_snps_pos_[f] << " ";
+    }
+    std::cout << std::endl;
+}
+*/
+
+
+void ChrCopyNumber::createRatioAndBAFFromSNPs(SNPinGenome& snpingenome)
+{
+    int index_chr = snpingenome.findIndex(chromosome_);
+    if (index_chr == NA) {
+        cerr << "An error occurred in GenomeCopyNumber::printBAF: could not find an SNP index for chromosome " << chromosome_ <<"\n";
+        exit(-1);
+    }
+    SNPatChr& snpatchr = snpingenome.SNP_atChr(index_chr);
+    int n = snpatchr.getSize();
+    std::cout << "Size snpatchar: " << n << std::endl;
+
+    std::vector<int> SNPs_positions;
+    std::vector<float> BAF_per_SNPs;
+
+    for (int i = 0; i < n; i++) {
+        float value = snpatchr.getValueAt(i);
+        if ((value >= 0) && (snpatchr.getStatusAt(i)!=0)) {
+            int position = snpatchr.getPositionAt(i);
+            SNPs_positions.push_back(position);
+            BAF_per_SNPs.push_back(value);
+	}
+    }
+    std::cout << "Size ratio per SNP (not the attribute): " << BAF_per_SNPs.size() << std::endl;
+
+    int j = 0;
+    int start = 0;
+    int end = 0;
+    for (int i = 0; i < (length_ - 1); i++) {
+        int n_values_in_window = 0;
+        while((SNPs_positions[j] >= (coordinates_[i]+1)) & (SNPs_positions[j] <= coordinates_[i+1])) {
+            if((ratio_[i] != -1) && (ratio_[i] < 3)) {
+                SNPs_positions_.push_back(SNPs_positions[j]);
+                BAF_per_SNPs_.push_back(BAF_per_SNPs[j]);
+                ratio_per_SNPs_.push_back(ratio_[i]);
+                median_ratio_per_SNPs_.push_back(medianProfile_[i]);
+                n_values_in_window += 1;
+	    }
+	    j += 1;
+        }
+
+        // Calculate fragment length
+        if (median_ratio_per_SNPs_.size() > n_values_in_window) {
+            if (median_ratio_per_SNPs_.rbegin()[0] != median_ratio_per_SNPs_.rbegin()[n_values_in_window]) {
+                end = median_ratio_per_SNPs_.size() - n_values_in_window;
+                int frag_length = end - start;
+                fragment_lengths_per_snps_pos_.push_back(frag_length);
+                start = end;
+            }
+        }
+    }
+    
+    int frag_length = median_ratio_per_SNPs_.size() - start;
+    fragment_lengths_per_snps_pos_.push_back(frag_length);
+    std::cout << "Size of ratio per SNPS: " << ratio_per_SNPs_.size() << std::endl;
+    std::cout << "Size of list of fragments sizes: " << fragment_lengths_per_snps_pos_.size() << std::endl;
+}
+
+/*
+void ChrCopyNumber::transformBAFtoMAF()
+{
+    unsigned int n = BAF_in_window_.size();
+    //MAF_in_window_(n);
+    for (unsigned int i = 0; i < n; i++) {
+        if (BAF_in_window_[i] == -1) {
+            MAF_in_window_.push_back(-1);
+        } else {
+            MAF_in_window_.push_back(std::abs(0.5 - BAF_in_window_[i]) + 0.5);
+        }
+    }
+}
+*/
+void ChrCopyNumber::transformBAFtoMAF()
+{
+    unsigned int n = BAF_per_SNPs_.size();
+    MAF_per_SNPs_.resize(n);
+    for (unsigned int i = 0; i < n; i++) {
+        if (BAF_per_SNPs_[i] == -1) {
+            MAF_per_SNPs_[i] = -1;
+        } else {
+            MAF_per_SNPs_[i] = std::abs(0.5 - BAF_per_SNPs_[i]) + 0.5;
+        }
+    }
+}
+
+void ChrCopyNumber::smoothRatioBySegments() {
+    std::cout << "Start smoothing ratio by segments" << std::endl;
+    int start = 0;
+    int last = 0;
+    int n = ratio_per_SNPs_.size();
+    smoothed_ratio_.reserve(n);
+    for (unsigned int i = 0; i < fragment_lengths_per_snps_pos_.size(); i++) {
+        last += fragment_lengths_per_snps_pos_[i];
+        std::vector<float> segment;
+        std::vector<float> med_seg;
+	    if ((last - start) == 1) {
+		    segment.push_back(ratio_per_SNPs_[start]);
+	    } else {
+		    segment = {ratio_per_SNPs_.begin() + start, ratio_per_SNPs_.begin() + last};
+            med_seg = {median_ratio_per_SNPs_.begin() + start, median_ratio_per_SNPs_.begin() + last};
+	    }
+        simpleExponentialSmoothingRatio(segment, start, last);
+        start = last;
+    }
+    std::cout << "Size of smoothed ratio: " << smoothed_ratio_.size() << std::endl;
+}
+
+void ChrCopyNumber::simpleExponentialSmoothingRatio(const std::vector<float>& segment, int start, int last)
+{
+    std::cout << "Simple exponential smoothing from " << start << " to " << last << std::endl;
+    unsigned int n = segment.size();
+    if (start == last){
+        std::cout << "Skipping smoothing since the segment starts and ends at the same position: " << start << std::endl;
+    } else {
+        double alpha = 0.05;
+        smoothed_ratio_.push_back(segment[0]);
+        if (n > 1) {
+            smoothed_ratio_.push_back(segment[1]);
+        }
+        if (n > 2) {
+            for (unsigned int i = 2; i < n; i++) {
+                if (segment[i] == -1) {
+                    smoothed_ratio_.push_back(-1);
+                } else {
+                    if (segment[i-1] == -1) {
+                        smoothed_ratio_.push_back(segment[i]);
+                        int j = i - 2;
+                        bool stop = false;
+                        while ((j >= 0) && (stop == false)) {
+                            if (segment[j] != -1) {
+                                smoothed_ratio_[start + i] = alpha * segment[i] + (1 - alpha) * smoothed_ratio_[start + j];
+                                stop = true;
+                            }
+                            j -= 1;
+                        }
+                    } else {
+                        smoothed_ratio_.push_back(alpha * segment[i] + (1 - alpha) * smoothed_ratio_[start + i - 1]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+void ChrCopyNumber::rescaleRatio(float peak)
+{
+    std::cout << "Rescale ratio" << std::endl;
+    //float peak = findMaximumPeak();
+    //std::cout << "Peak: " << peak << std::endl;
+    int n = smoothed_ratio_.size();
+    if (peak != 0) {
+        for (int i = 0; i < n; i++) {
+            sm_rs_ratio_.push_back(smoothed_ratio_[i]/peak);
+        }
+    } else {
+        sm_rs_ratio_ = smoothed_ratio_;
+    }
+}
+
+/*
+float ChrCopyNumber::findMaximumPeak()
+{
+    int n = smoothed_ratio_.size();
+    float max_el = *max_element(smoothed_ratio_.begin(), smoothed_ratio_.end());
+    std::vector<float> bins(ceil((max_el+0.01)/0.01));
+    float x = 0;
+    std::generate(bins.begin(), bins.end(), [&]{return x+=0.01;});
+    std::vector<float> filt_smoothed_ratio;
+    for (int i = 0; i < n; i++) {
+        if (smoothed_ratio_[i] != -1) {
+            filt_smoothed_ratio.push_back(smoothed_ratio_[i]);
+        }
+    }
+    std::vector<float> counts = makeHistogramOfCounts(filt_smoothed_ratio, bins);
+    std::cout << "Counts: ";
+    for (float c : counts) {
+        std::cout << c << " ";
+    }
+    std::cout << std::endl;
+    std::map<int, float> peaks = findPeaks(counts, 2, 50, 20);
+    int peak_pos = 0;
+    float peak_value = 0;
+    for (std::map<int, float>::iterator it = peaks.begin(); it != peaks.end(); ++it) {
+        if (it->second > peak_value) {
+            peak_value = it->second;
+            peak_pos = it->first;
+        }
+    }
+    float peak = bins[peak_pos];
+    return peak;
+}
+ */
+
+void ChrCopyNumber::simpleExponentialSmoothingMAF()
+{
+    std::cout << "Start simple exponential smoothing on MAF" << std::endl;
+    float alpha = 0.05;
+    int n = MAF_per_SNPs_.size();
+    std::cout << "/* MAF_per_SNPs_.size():\t" << n << std::endl;
+    if (n==0) {
+        return;
+    }
+    smoothed_MAF_.resize(n);
+    smoothed_MAF_[0] = MAF_per_SNPs_[0];
+    for (unsigned int i = 1; i < n; i++) {
+        if (MAF_per_SNPs_[i] == -1) {
+            smoothed_MAF_[i] = -1;
+        } else {
+            if (MAF_per_SNPs_[i-1] == -1) {
+                smoothed_MAF_[i] = MAF_per_SNPs_[i];
+                int j = i - 2;
+                bool stop = false;
+                while((j >= 0) && (stop == false)) {
+                    if (smoothed_MAF_[j] != -1) {
+                        smoothed_MAF_[i] = alpha * MAF_per_SNPs_[i] + (1 - alpha) * smoothed_MAF_[j];
+                        stop = true;
+                    }
+                    j--;
+                }
+            } else {
+                smoothed_MAF_[i] = alpha * MAF_per_SNPs_[i] + (1 - alpha) * smoothed_MAF_[i-1];
+            }
+        }
+    }
+}
+
+void ChrCopyNumber::filterRatioAndMAF()
+{
+    std::cout << "Filter BAF and ratio" << std::endl;
+    int n = sm_rs_ratio_.size();
+    for (unsigned int i = 0; i < n; i++) {
+        if ((sm_rs_ratio_[i] != -1) && (sm_rs_ratio_[i] < 3) && (smoothed_MAF_[i] != -1)) {
+            filtered_ratio_.push_back(sm_rs_ratio_[i]);
+            filtered_MAF_.push_back(smoothed_MAF_[i]);
+        }
+    }
+    std::cout << "Size of filtered ratio: " << filtered_ratio_.size() << std::endl;
+}
+
+float ChrCopyNumber::getSmoothedRatioAtBin(int i) {
+    return smoothed_ratio_[i];
+}
+
+int ChrCopyNumber::getSmoothedRatioSize() {
+    return smoothed_ratio_.size();
+}
+
+float ChrCopyNumber::getRescaledRatioAtBin(int i) {
+    return sm_rs_ratio_[i];
+}
+
+float ChrCopyNumber::getFilteredRatioAt(int i) {
+    return filtered_ratio_[i];
+}
+
+float ChrCopyNumber::getRatioPerSNPat(int i) {
+    return ratio_per_SNPs_[i];
+}
+
+float ChrCopyNumber::getBAFPerSNPat(int i) {
+    return BAF_per_SNPs_[i];
+}
+
+float ChrCopyNumber::getMAFPerSNPat(int i) {
+    return MAF_per_SNPs_[i];
+}
+
+float ChrCopyNumber::getMedianRatioPerSNPat(int i) {
+    return median_ratio_per_SNPs_[i];
+}
+
+float ChrCopyNumber::getSmoothedMAFat(int i) {
+    return smoothed_MAF_[i];
+}
+
+float ChrCopyNumber::getFilteredMAFat(int i) {
+    return filtered_MAF_[i];
+}
+
+int ChrCopyNumber::getSNPLength() {
+    return ratio_per_SNPs_.size();
+}
+
+int ChrCopyNumber::getFilteredLength() {
+    return filtered_ratio_.size();
+}
+
+float ChrCopyNumber::getSampledBAFat(int i) {
+    return BAF_in_window_[i];
+}
+
+float ChrCopyNumber::getSampledMAFat(int i) {
+    return MAF_in_window_[i];
+}
+
+int ChrCopyNumber::getSNPPositionAt(int i) {
+    return SNPs_positions_[i];
+}
+
+
+//using namespace std;

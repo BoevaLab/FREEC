@@ -2,8 +2,8 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-const double VERSION_OFFSET = 3;
-const double FREEC_VERSION = 11.6;
+const double VERSION_OFFSET = 0;
+const double FREEC_VERSION = 12.0;
 const double CONTROL_FREEC_VERSION = FREEC_VERSION - VERSION_OFFSET;
 
 #endif

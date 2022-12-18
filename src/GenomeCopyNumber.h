@@ -13,6 +13,7 @@
 #include <fstream>
 #include <bitset>
 #include "SVfinder.h"
+#include <utility>
 
 #include "myFunc.h"
 #include "ChrCopyNumber.h"
@@ -20,6 +21,10 @@
 #include "chisquaredistr.h" //to calculate chisquare distribution
 #include "EntryCNV.h"
 #include "SNPinGenome.h"
+#include "GenomeGMM.h"
+#include "bayes_opt.h"
+#include <Eigen/Dense>
+
 
 class GenomeCopyNumber
 {
@@ -75,9 +80,9 @@ public:
 	float evaluateContamination();
     float evaluateContaminationwithLR();
 
-	void printRatio(std::string const& outFile, bool ifBedGraphOutPut, bool printNA);
-	void printRatio(std::string const& chr, std::string const& outFile, bool printNA);
-	void printRatio(std::string const& chr, std::ofstream & file, bool printNA);
+	void printRatio(std::string const& outFile, bool ifBedGraphOutPut, bool printNA, bool has_smoothed_profile = false, bool has_MAF = false);
+	void printRatio(std::string const& chr, std::string const& outFile, bool printNA, bool has_smoothed_profile, bool has_MAF);
+	void printRatio(std::string const& chr, std::ofstream & file, bool printNA, bool has_smoothed_profile, bool has_MAF);
     void printRatioBedGraph(std::string const& chr, std::ofstream & file, std::string const& typeCNA);
 	void printPloidy(std::string const& outFile) ;
 	void printPloidy(std::ofstream & file);
@@ -124,6 +129,10 @@ public:
     bool ifHasBAF();
     void setSex(std::string sex);
     void setSeekSubclones(bool seekSubclones);
+    void setDataSubsamplingRateInPuritySearch(int dataSubsamplingRateInPuritySearch);
+    void setDataSubsamplingRateInPloidyEvaluation(int dataSubsamplingRateInPloidyEvaluation);
+    void setDoRescaleRatio(bool doRescaleRatio);
+    void setMaxIterGMM(int maxIterGMM);
 
     int findWinNumber(int position, std::string myName, std::string const& matefile);
     void setWESanalysis(bool WESgiven);
@@ -133,6 +142,25 @@ public:
     double Percentage_GenomeExplained(int &);
     long double calculateRSS(int ploidy);
     bool isMappUsed();
+    int getDataSubsamplingRateInPuritySearch();
+    int getDataSubsamplingRateInPloidyEvaluation();
+    int getMaxIterGMM();
+
+    // Added by Gara
+    float findMaximumPeak(std::vector<float> total_ratio);
+    void rescaleRatio();
+    void preprocessing(SNPinGenome& snpingenome);
+    // Print preprocessing outputs
+    void printRatioAfterPreprocessing(std::string const& outFile);
+    // Get ratio and MAF vectors that span on the whole genome, instead of a single chromosome
+    float getFilteredRatio(int index, int i);
+    float getFilteredMAF(int index, int i);
+    // For a given pair of ploidy tau and purity alpha, the means of ratio and MAF are fixed
+    void fixExpectedRatioAndMAF(GenomeGMM& gmm, const std::vector<float>& ratio, const std::vector<float>& sm_maf, int ploidy, float purity);
+    // Fit the GMM
+    double processGMM(std::string const& outFile, int tau, float alpha, bool take_subsample_flag, int take_each_nth_element_for_gmm_fit, bool usePenalty = true);
+
+    void printGMMFinalLikelihoods(std::string const& outFile, const std::vector<std::pair<int, double>>& ploidy_purity_pairs, const std::vector<double> likelihoods, const std::vector<int> number_of_iterations);
 
 private:
 
@@ -145,6 +173,12 @@ private:
     bool isRatioLogged_;
 
 	void fillMyHash(std::string const& mateFileName , std::string const& inputFormat, std::string const& matesOrientation, int windowSize, int step, std::string targetBed = "");
+
+    int  dataSubsamplingRateInPuritySearch;
+    int  dataSubsamplingRateInPloidyEvaluation;
+    bool doRescaleRatio;
+    int  maxIterGMM;
+
 	int windowSize_;
 	int step_;
 	long totalNumberOfPairs_;
@@ -165,6 +199,16 @@ private:
 	std::string pathToSambamba_;
 	std::string pathToReference_;
 	std::string SambambaThreads_;
+
+    float eval_objective(GenomeGMM sampleGMM, int tau, float alpha, std::vector<float>& genome_ratio_smoothed,
+                         std::vector<float>& genome_maf_smoothed);
+
+    float
+    compute_penalty(const std::vector<double> &weights, const std::vector<Eigen::Matrix2d> &covs, Eigen::MatrixXd mu,
+                    int N,
+                    float threshold_empty = 5e-3,
+                    float threshold_noise = 0.1,
+                    int C = 1500);
 };
 #endif
 
