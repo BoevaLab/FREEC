@@ -37,22 +37,23 @@ if (ratioFileInd) {
   
   #Plotting in the log scale:
   offset = 0.01
-  
+  ratio$log2ratio <- log2(ratio$Ratio+offset) #added calculated column to main table so that the operation is only done once
+
   png(filename = paste(args[ratioFileInd],".log2.png",sep = ""), width = 1180, height = 1180,
       units = "px", pointsize = 20, bg = "white", res = NA)
   plot(1:10)
   op <- par(mfrow = c(5,5))
   
   for (i in c(1:22,'X','Y')) {
-    tt <- which(ratio$Chromosome==i)
+    tt <- which(ratio$Chromosome==i & is.na(ratio$log2ratio)==FALSE) #filtering rows with na values in log2ratio and it uses the calculated column instead of calculating it every time
     if (length(tt)>0) {
-      plot(ratio$Start[tt],log2(ratio$Ratio[tt]+offset),xlab = paste ("position, chr",i),ylab = "normalized copy number profile (log2)",pch = ".",col = colors()[88])
-      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber>ploidy )
-      points(ratio$Start[tt],log2(ratio$Ratio[tt]+offset),pch = ".",col = colors()[136])
+      plot(ratio$Start[tt],ratio$log2ratio[tt],xlab = paste ("position, chr",i),ylab = "normalized copy number profile (log2)",pch = ".",col = colors()[88]) #it uses the calculated log2 column
+      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber>ploidy & is.na(ratio$log2ratio)==FALSE) #added the na filter to the points too and it uses the calculated column
+      points(ratio$Start[tt],ratio$log2ratio[tt],pch = ".",col = colors()[136])
       
       
-      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber<ploidy & ratio$CopyNumber!= -1)
-      points(ratio$Start[tt],log2(ratio$Ratio[tt]+offset),pch = ".",col = colors()[461])
+      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber<ploidy & ratio$CopyNumber!= -1 & is.na(ratio$log2ratio)==FALSE) #added the na filter to the points too and it uses the calculated column
+      points(ratio$Start[tt],ratio$log2ratio[tt],pch = ".",col = colors()[461])
       tt <- which(ratio$Chromosome==i)
       
       #UNCOMMENT HERE TO SEE THE PREDICTED COPY NUMBER LEVEL:
@@ -66,7 +67,7 @@ if (ratioFileInd) {
     
   }
   dev.off()
-  
+
   #------------------------------------------------------
   #Plotting in raw ratio values:
   png(filename = paste(args[ratioFileInd],".png",sep = ""), width = 1180, height = 1180,
@@ -77,12 +78,12 @@ if (ratioFileInd) {
   #replace high values of ratio with value "maxLevelToPlot":
   maxLevelToPlot <- 3
   ratio$Ratio[ratio$Ratio>maxLevelToPlot]=maxLevelToPlot
- 
+
   for (i in c(1:22,'X','Y')) {
     tt <- which(ratio$Chromosome==i)
     if (length(tt)>0) {
       plot(ratio$Start[tt],ratio$Ratio[tt]*ploidy,ylim = c(0,maxLevelToPlot*ploidy),xlab = paste ("position, chr",i),ylab = "normalized copy number profile",pch = ".",col = colors()[88])
-      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber>ploidy )
+      tt <- which(ratio$Chromosome==i  & ratio$CopyNumber>ploidy)
       points(ratio$Start[tt],ratio$Ratio[tt]*ploidy,pch = ".",col = colors()[136])
       
       tt <- which(ratio$Chromosome==i  & ratio$Ratio==maxLevelToPlot & ratio$CopyNumber>ploidy)	
