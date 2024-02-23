@@ -1136,18 +1136,17 @@ int main(int argc, char *argv[])
          myName,unexplainedChromosomes, CompleteGenomicsData,normalization);
     }
 
-    double breakPointThreshold_BAF=1;
+    double breakPointThreshold_BAF= 1;
 	if (has_BAF || makePileup != "false" || isHasMiniPileUPsample) {
-        breakPointThreshold_BAF = 0.8;
-        if (ifTargeted)
-            breakPointThreshold_BAF = 1.6;
-
-        if (WESanalysis == true)
-            breakPointThreshold_BAF = 5;
-
+        	breakPointThreshold_BAF = 0.8;
+        	if (ifTargeted)
+            		breakPointThreshold_BAF = 1.6;
+        	if (WESanalysis == true)
+            		breakPointThreshold_BAF = 5;
+		breakPointThreshold_BAF=(double)cf.Value("BAF","breakPointThreshold_BAF", breakPointThreshold_BAF);
+		
 		thrPool = thrPoolManager->newThreadPool("SNPinGenome_perform");
-
-        SNPinGenomePerformArgWrapper* snpArg;
+	        SNPinGenomePerformArgWrapper* snpArg;
 
         if (makePileup == "false" && !isHasMiniPileUPsample)
             {
