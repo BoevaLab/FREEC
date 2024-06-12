@@ -21,17 +21,19 @@ open (FILE, "<$Filename") or die "Cannot open file!!!!: $!";
 open (OUT, ">$result_file") or die "Cannot open file!!!!: $!";
 
 $_ = <FILE>;
-if (/>(.*)/) {		
-	 print OUT $1,"\t";
+if (/>(.*)/) {
+	my @line_splits = split /\s+/, $1;	
+	print OUT $line_splits[0],"\t";
 }
 my $length = 0;
 
 while (<FILE>)  {
 	chomp;
-	if (/>(.*)/) {	
+	if (/>(.*)/) {
+		my @line_splits = split /\s+/, $1;	
 		print OUT $length,"\n";
 		$length = 0;
-		 print OUT $1,"\t";
+		print OUT $line_splits[0],"\t";
 	}
 	else {
 		$length += length($_);
