@@ -425,7 +425,7 @@ int main(int argc, char *argv[])
         // will try to get control_MateFile from the command line:
         control_MateFile = getControlNameFromCommandLine(argc, argv);
         if (control_MateFile.compare("")!=0) { //i.e. there is information in the command line about the sample
-            has_sample_MateFile=1;
+            has_control_MateFile=1;
         }
     }
     if (has_control_MateFile) {
