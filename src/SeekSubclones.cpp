@@ -80,11 +80,12 @@ void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::st
         vector <int> breakpoints = samplecopynumber.getChrCopyNumberAt(index).getBreakPoints() ;
         int bpstart=0;
         int bpend=0;
-        if (breakpoints.back()<length) {breakpoints.push_back(length);}
+        if (breakpoints.empty() || breakpoints.back()<length) {breakpoints.push_back(length);}
         if (breakpoints.size()!=samplecopynumber.getChrCopyNumberAt(index).getMedianValues().size()) {
             cerr << "Problem with the number of breakpoints:" <<breakpoints.size()<< " != " << samplecopynumber.getChrCopyNumberAt(index).getMedianValues().size()<<"\n";
             exit(-1);
         }
+        const vector<float> ratios = samplecopynumber.getChrCopyNumberAt(index).getRatio();
         for (unsigned int fragmentCount=0; fragmentCount<breakpoints.size(); fragmentCount++) {
             bpend=breakpoints[fragmentCount];
             float fragmentMedian=samplecopynumber.getChrCopyNumberAt(index).getMedianValuesAt(fragmentCount);
@@ -94,8 +95,8 @@ void SeekSubclones::getSegmentsInfo(GenomeCopyNumber & samplecopynumber, std::st
                 expected=samplecopynumber.getChrCopyNumberAt(index).getSmoothedForInterval(bpstart,bpend);
             }
 
-            vector<float>::const_iterator first = samplecopynumber.getChrCopyNumberAt(index).getRatio().begin() + bpstart;
-            vector<float>::const_iterator last = samplecopynumber.getChrCopyNumberAt(index).getRatio().begin() + bpend;
+            vector<float>::const_iterator first = ratios.begin() + bpstart;
+            vector<float>::const_iterator last = ratios.begin() + bpend;
             vector<float> data(first, last);
 
             if (data.size()> 0 && expected >= 0) {
